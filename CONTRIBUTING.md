@@ -6,10 +6,10 @@ There are two main forms of contribution: reporting issues and performing code c
 
 ## Reporting Issues
 
-If you find a problem with Stratos, report it using [GitHub issues](https://github.com/suse/stratos/issues/new).
+If you find a problem with Stratos, report it using [GitHub issues](https://github.com/epinio/ui-backend/issues/new).
 
 Before reporting a new issue, please take a moment to check whether it has already been reported
-[here](https://github.com/suse/stratos/issues). If this is the case, please:
+[here](https://github.com/epinio/ui-backend/issues). If this is the case, please:
 
 - Read all the comments to confirm that it's the same issue you're having.
 - Refrain from adding "same thing here" or "+1" comments. Just hit the
@@ -35,7 +35,7 @@ To send your code change, use GitHub pull requests. The workflow is as follows:
 
   1. Fork the project.
 
-  1. Create a branch based on `master`.
+  1. Create a branch based on `main`.
 
   1. Implement your change, including tests and documentation.
 
@@ -66,7 +66,7 @@ pointing to the number of the issue (e.g. "Fixes #123").
 
 ### Pull requests and branches
 
-All work happens in branches. The master branch is only used as the target for pull
+All work happens in branches. The main branch is only used as the target for pull
 requests.
 
 During code review you often need to update pull requests. Usually you do that

@@ -1,9 +1,0 @@
-{
-  "name": "@stratosui/core",
-  "version": "0.0.1",
-  "stratos": {
-    "assets": {
-      "assets": "core/assets"
-    }
-  }
-}
