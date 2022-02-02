@@ -14,6 +14,7 @@ type EndpointPlugin interface {
 }
 
 type RoutePlugin interface {
+	AddRootGroupRoutes(echoContext *echo.Group)
 	AddSessionGroupRoutes(echoContext *echo.Group)
 	AddAdminGroupRoutes(echoContext *echo.Group)
 }
