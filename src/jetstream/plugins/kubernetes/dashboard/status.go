@@ -1,7 +1,7 @@
 package dashboard
 
 import (
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 )
 
 const stratosServiceAccountSelector = "stratos-role%3Dkubernetes-dashboard-user"

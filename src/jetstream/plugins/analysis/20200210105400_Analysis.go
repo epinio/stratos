@@ -6,7 +6,7 @@ import (
 
 	"bitbucket.org/liamstask/goose/lib/goose"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/datastore"
+	"github.com/epinio/ui-backend/src/jetstream/datastore"
 )
 
 func init() {

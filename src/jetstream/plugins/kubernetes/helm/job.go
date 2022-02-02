@@ -3,7 +3,7 @@ package helm
 import (
 	log "github.com/sirupsen/logrus"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 )
 
 // KubeResourceJob = Resource(s) that we need to go and fetch

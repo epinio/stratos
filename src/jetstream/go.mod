@@ -1,4 +1,4 @@
-module github.com/cloudfoundry-incubator/stratos/src/jetstream
+module github.com/epinio/ui-backend/src/jetstream
 
 go 1.12
 
@@ -22,8 +22,8 @@ require (
 	github.com/cf-stratos/mysqlstore v0.0.0-20170822100912-304308519d13
 	github.com/charlievieth/fs v0.0.0-20170613215519-7dc373669fa1 // indirect
 	github.com/cloudfoundry-community/go-cfenv v1.17.0
-	github.com/cloudfoundry-incubator/stratos/src/jetstream/plugins/kubernetes v0.0.0-00010101000000-000000000000
-	github.com/cloudfoundry-incubator/stratos/src/jetstream/plugins/monocular v0.0.0-00010101000000-000000000000
+	github.com/epinio/ui-backend/src/jetstream/plugins/kubernetes v0.0.0-00010101000000-000000000000
+	github.com/epinio/ui-backend/src/jetstream/plugins/monocular v0.0.0-00010101000000-000000000000
 	github.com/cloudfoundry/bosh-cli v5.4.0+incompatible // indirect
 	github.com/cloudfoundry/bosh-utils v0.0.0-20190206192830-9a0affed2bf1 // indirect
 	github.com/cloudfoundry/cli-plugin-repo v0.0.0-20190220174354-ecf721ef3813 // indirect
@@ -88,9 +88,9 @@ require (
 	k8s.io/kubectl v0.0.0 // indirect
 )
 
-replace github.com/cloudfoundry-incubator/stratos/src/jetstream/plugins/kubernetes => ./plugins/kubernetes
+replace github.com/epinio/ui-backend/src/jetstream/plugins/kubernetes => ./plugins/kubernetes
 
-replace github.com/cloudfoundry-incubator/stratos/src/jetstream/plugins/monocular => ./plugins/monocular
+replace github.com/epinio/ui-backend/src/jetstream/plugins/monocular => ./plugins/monocular
 
 replace (
 	github.com/SermoDigital/jose => github.com/SermoDigital/jose v0.9.2-0.20180104203859-803625baeddc

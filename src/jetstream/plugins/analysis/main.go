@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/plugins/analysis/store"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/plugins/analysis/store"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 
 	"github.com/labstack/echo/v4"
 	log "github.com/sirupsen/logrus"

@@ -3,7 +3,7 @@ package cfapppush
 import (
 	"errors"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 	"github.com/labstack/echo/v4"
 )
 

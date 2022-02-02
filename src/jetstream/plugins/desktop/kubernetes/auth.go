@@ -5,9 +5,9 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/plugins/kubernetes/auth"
+	"github.com/epinio/ui-backend/src/jetstream/plugins/kubernetes/auth"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 

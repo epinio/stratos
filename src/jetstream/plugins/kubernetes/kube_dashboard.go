@@ -9,8 +9,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/rest"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/plugins/kubernetes/dashboard"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/plugins/kubernetes/dashboard"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 )
 
 // Get the config for the endpoint

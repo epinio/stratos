@@ -11,13 +11,13 @@ import (
 
 	"errors"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 	"github.com/labstack/echo/v4"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/plugins/kubernetes/auth"
+	"github.com/epinio/ui-backend/src/jetstream/plugins/kubernetes/auth"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/plugins/kubernetes/terminal"
+	"github.com/epinio/ui-backend/src/jetstream/plugins/kubernetes/terminal"
 )
 
 // KubernetesSpecification is the endpoint that adds Kubernetes support to the backend

@@ -7,7 +7,7 @@ import (
 	// Import the OIDC auth plugin
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 )
 
 // KubeProxyError represents error when a proxied request to the Kube API failes

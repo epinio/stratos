@@ -31,7 +31,7 @@ import (
 	"code.cloudfoundry.org/cli/command/v6/shared"
 	sharedV3 "code.cloudfoundry.org/cli/command/v6/shared"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 )
 
 // CFPushApp abstracts the push functionality form the CLI library

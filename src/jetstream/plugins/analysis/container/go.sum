@@ -1,5 +1,5 @@
-github.com/cloudfoundry-incubator/stratos v2.0.0-beta-001+incompatible h1:UUxNbLjhv2cfymub5yNN1tjjqYkteHBBagb4jcbXEIQ=
-github.com/cloudfoundry-incubator/stratos/src/jetstream v0.0.0-20200222120421-390cf0f6670b h1:52Py09Cmdnyxr750Tj5InffbWJpCDTWie0RCbxxoUAA=
+github.com/epinio/ui-backend v2.0.0-beta-001+incompatible h1:UUxNbLjhv2cfymub5yNN1tjjqYkteHBBagb4jcbXEIQ=
+github.com/epinio/ui-backend/src/jetstream v0.0.0-20200222120421-390cf0f6670b h1:52Py09Cmdnyxr750Tj5InffbWJpCDTWie0RCbxxoUAA=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

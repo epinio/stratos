@@ -6,7 +6,7 @@ import (
 
 	"helm.sh/helm/v3/pkg/action"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 )
 
 // ListReleases will list the helm releases for all endpoints

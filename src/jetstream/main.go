@@ -24,8 +24,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/custombinder"
-	_ "github.com/cloudfoundry-incubator/stratos/src/jetstream/docs"
+	"github.com/epinio/ui-backend/src/jetstream/custombinder"
+	_ "github.com/epinio/ui-backend/src/jetstream/docs"
 
 	"bitbucket.org/liamstask/goose/lib/goose"
 	"github.com/antonlindstrom/pgstore"
@@ -40,17 +40,17 @@ import (
 	log "github.com/sirupsen/logrus"
 	echoSwagger "github.com/swaggo/echo-swagger"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/crypto"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/datastore"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/factory"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/apikeys"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/cnsis"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/console_config"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces/config"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/localusers"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/sessiondata"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/tokens"
+	"github.com/epinio/ui-backend/src/jetstream/crypto"
+	"github.com/epinio/ui-backend/src/jetstream/datastore"
+	"github.com/epinio/ui-backend/src/jetstream/factory"
+	"github.com/epinio/ui-backend/src/jetstream/repository/apikeys"
+	"github.com/epinio/ui-backend/src/jetstream/repository/cnsis"
+	"github.com/epinio/ui-backend/src/jetstream/repository/console_config"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces/config"
+	"github.com/epinio/ui-backend/src/jetstream/repository/localusers"
+	"github.com/epinio/ui-backend/src/jetstream/repository/sessiondata"
+	"github.com/epinio/ui-backend/src/jetstream/repository/tokens"
 )
 
 // @title Stratos API

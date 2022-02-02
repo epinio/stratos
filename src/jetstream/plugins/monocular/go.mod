@@ -1,4 +1,4 @@
-module github.com/cloudfoundry-incubator/stratos/src/jetstream/plugins/monocular
+module github.com/epinio/ui-backend/src/jetstream/plugins/monocular
 
 go 1.12
 
@@ -19,4 +19,4 @@ require (
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 )
 
-replace github.com/cloudfoundry-incubator/stratos/src/jetstream => ../..
+replace github.com/epinio/ui-backend/src/jetstream => ../..

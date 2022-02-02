@@ -1,4 +1,4 @@
-module github.com/cloudfoundry-incubator/stratos/src/jetstream/plugins/kubernetes
+module github.com/epinio/ui-backend/src/jetstream/plugins/kubernetes
 
 go 1.12
 
@@ -32,7 +32,7 @@ require (
 
 replace (
 	github.com/SermoDigital/jose => github.com/SermoDigital/jose v0.9.2-0.20180104203859-803625baeddc
-	github.com/cloudfoundry-incubator/stratos/src/jetstream => ../..
+	github.com/epinio/ui-backend/src/jetstream => ../..
 	github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503-38ab9da00309
 	github.com/kubernetes-sigs/aws-iam-authenticator => github.com/kubernetes-sigs/aws-iam-authenticator v0.3.1-0.20190111160901-390d9087a4bc
 	github.com/russross/blackfriday v2.0.0+incompatible => github.com/russross/blackfriday v1.5.2

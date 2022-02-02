@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/plugins/monocular/store"
+	"github.com/epinio/ui-backend/src/jetstream/plugins/monocular/store"
 	"github.com/labstack/echo/v4"
 	yaml "gopkg.in/yaml.v2"
 )
