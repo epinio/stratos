@@ -31,6 +31,11 @@ func (p *portalProxy) InitStratosAuthService(t interfaces.AuthEndpointType) erro
 			localUserScope:         p.Config.ConsoleConfig.LocalUserScope,
 			p:                      p,
 		}
+	case interfaces.Epinio:
+		auth = &epinioAuth{
+			databaseConnectionPool: p.DatabaseConnectionPool,
+			p:                      p,
+		}
 	case interfaces.Remote:
 		auth = &uaaAuth{
 			databaseConnectionPool: p.DatabaseConnectionPool,
@@ -85,6 +90,10 @@ func (p *portalProxy) login(c echo.Context, skipSSLValidation bool, client strin
 	}
 
 	return uaaRes, u, nil
+}
+
+func (p *portalProxy) ConsoleLogin(c echo.Context) error {
+	return p.consoleLogin(c)
 }
 
 func (p *portalProxy) consoleLogin(c echo.Context) error {

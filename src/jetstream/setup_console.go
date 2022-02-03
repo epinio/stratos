@@ -273,6 +273,8 @@ func (p *portalProxy) initialiseConsoleConfig(envLookup *env.VarSet) (*interface
 				consoleConfig.AuthorizationEndpoint = consoleConfig.UAAEndpoint
 				log.Debugf("Using UAA Endpoint for Auth Endpoint: %s", consoleConfig.AuthorizationEndpoint)
 			}
+		} else if val == interfaces.Epinio {
+			// TODO: RC anything??
 		} else {
 			//Auth endpoint type has been set to an invalid value
 			return consoleConfig, errors.New("AUTH_ENDPOINT_TYPE must be set to either \"local\" or \"remote\"")

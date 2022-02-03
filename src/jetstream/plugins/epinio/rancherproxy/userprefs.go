@@ -1,4 +1,4 @@
-package rancher
+package rancherproxy
 
 import (
 	_ "embed"

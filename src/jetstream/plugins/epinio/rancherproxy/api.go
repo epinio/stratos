@@ -1,10 +1,10 @@
-package rancher
+package rancherproxy
 
 import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/epinio/ui-backend/stratos/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 	"github.com/labstack/echo/v4"
 )
 
@@ -45,11 +45,17 @@ func GetPrincipals(ec echo.Context) error {
 	return sendResponse(ec, principal)
 }
 
-func Login(authService interfaces.StratosAuth) echo.HandlerFunc {
+// func Login(authService interfaces.StratosAuth) echo.HandlerFunc {
+// 	return func(ec echo.Context) error {
+// 		return authService.Login((ec))
+// 	}
+// }
+func EpinioLogin(authService interfaces.StratosAuth) echo.HandlerFunc {
 	return func(ec echo.Context) error {
 		return authService.Login((ec))
 	}
 }
+
 
 func Clusters(ec echo.Context) error {
 	col := Collection{

@@ -1,4 +1,4 @@
-package rancher
+package rancherproxy
 
 import (
 	"fmt"
@@ -55,13 +55,6 @@ type AuthProvider struct {
 	Actions  map[string]string `json:"actions"`
 	Links    map[string]string `json:"links"`
 	BaseType string            `json:"baseType"`
-}
-
-type LoginParams struct {
-	Description  string `json:"description"`
-	Username     string `json:"username"`
-	Password     string `json:"password"`
-	ResponseType string `json:"responseType"`
 }
 
 type Collection struct {

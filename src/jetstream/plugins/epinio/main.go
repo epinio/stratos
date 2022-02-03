@@ -1,13 +1,13 @@
-package analysis
+package epinio
 
 import (
 	"errors"
-	"encoding/json"
-	"net/http"
+
+	rancher "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy"
+
 
 	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
-	"github.com/rancher/apiserver/pkg/types"
-
+	// "github.com/rancher/apiserver/pkg/types"
 	// v3 "github.com/rancher/rancher/pkg/apis/management.cattle.io/v3"
 
 	"github.com/labstack/echo/v4"
@@ -61,13 +61,56 @@ func (epinio *Epinio) AddSessionGroupRoutes(echoGroup *echo.Group) {
 }
 
 func (epinio *Epinio) AddRootGroupRoutes(echoGroup *echo.Group) {
-	echoGroup.GET("/ping", epinio.ping)
+	echoGroup.GET("/ping", epinio.ping) // TODO: RC REMOVE
 
 	epinioGroup := echoGroup.Group("/epinio")
-	epinioGroup.GET("/ping", epinio.ping)
 
-	rancherShim := epinioGroup.Group("/rancher")
-	rancherShim.GET("/v1/management.cattle.io.setting", epinio.rancherMgmtSettings)
+	p := epinio.portalProxy
+
+	epinioProxy := epinioGroup.Group("/proxy") // TODO: RC
+	epinioProxy.Use(p.SetSecureCacheContentMiddleware)
+	epinioProxy.GET("/ping", epinio.ping) // TODO: RC REMOVE
+
+	rancherProxy := epinioGroup.Group("/rancher")
+	// Rancher Steve API
+	stevePublic := rancherProxy.Group("/v1")
+	stevePublic.Use(p.SetSecureCacheContentMiddleware)
+	// steve.Use(p.SessionMiddleware()) // TODO: RC some of these should be secure (clear cache to see requests)
+	stevePublic.Use(func(h echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			userID, err := p.GetSessionValue(c, "user_id")
+			if err == nil {
+				c.Set("user_id", userID)
+			}
+			return h(c)
+		}
+	})
+	stevePublic.GET("/management.cattle.io.setting", rancher.MgmtSettings)
+	stevePublic.GET("/userpreferences", rancher.GetUserPrefs) // TODO: RC this shouldn't be needed before logging in
+	stevePublic.GET("/management.cattle.io.cluster", rancher.Clusters)// TODO: RC this shouldn't be needed before logging in
+
+
+	// Rancher Norman API
+	norman := rancherProxy.Group("/v3")
+	norman.Use(p.SetSecureCacheContentMiddleware)
+	norman.Use(p.SessionMiddleware())
+
+	norman.GET("/users", rancher.GetUser)
+	norman.POST("/tokens", rancher.TokenLogout)
+	norman.GET("/principals", rancher.GetPrincipals)
+
+	// Rancher Norman public API
+	normanPublic := rancherProxy.Group("/v3-public")
+	normanPublic.Use(p.SetSecureCacheContentMiddleware)
+	normanPublic.POST("/authProviders/local/login", p.ConsoleLogin)
+	normanPublic.GET("/authProviders", rancher.GetAuthProviders)
+
+
+
+	// rancherShim := epinioGroup.Group("/rancher")
+	// rancherShim.GET("/v1/management.cattle.io.setting", epinio.rancherMgmtSettings)
+
+
 }
 
 // Init performs plugin initialization
@@ -89,38 +132,3 @@ func (epinio *Epinio) ping(ec echo.Context) error {
 	return ec.JSON(200, response)
 }
 
-func (epinio *Epinio) rancherMgmtSettings(ec echo.Context) error {
-	log.Debug("epinio management.cattle.io.setting")// TODO: RC Remove
-
-	b := []byte(`{"Name":"Wednesday","Age":6,"Parents":["Gomez","Morticia"]}`)
-	var firstLogin *types.RawResource
-	if err := json.Unmarshal(b, &firstLogin); err != nil {
-		return echo.NewHTTPError(http.StatusForbidden, err.Error()) // TODO: RC
-	}
-
-	res, err := epinio.rancherCreateListResponse([]*types.RawResource { firstLogin }, "management.cattle.io.setting")
-	if err != nil {
-		return echo.NewHTTPError(http.StatusForbidden, err.Error())
-	}
-
-	return ec.JSON(200, res)
-}
-
-
-func (epinio *Epinio) rancherCreateListResponse(data []*types.RawResource, resourceType string) (types.GenericCollection, error) {
-
-	res := types.GenericCollection{
-		Collection: types.Collection{
-			Type: "collection",
-			Links: map[string]string{
-				"self": "https://rancher.richardcox.dev/v1/" + resourceType, // TODO: RC
-			},
-			Actions: map[string]string{},
-			ResourceType: resourceType,
-			Revision: "1",
-		},
-		Data: data,
-	}
-
-	return res, nil;
-}

@@ -40,18 +40,17 @@ import (
 	log "github.com/sirupsen/logrus"
 	echoSwagger "github.com/swaggo/echo-swagger"
 
-	"github.com/epinio/ui-backend/stratos/src/jetstream/crypto"
-	"github.com/epinio/ui-backend/stratos/src/jetstream/datastore"
-	"github.com/epinio/ui-backend/stratos/src/jetstream/factory"
-	"github.com/epinio/ui-backend/stratos/src/jetstream/rancher"
-	"github.com/epinio/ui-backend/stratos/src/jetstream/repository/apikeys"
-	"github.com/epinio/ui-backend/stratos/src/jetstream/repository/cnsis"
-	"github.com/epinio/ui-backend/stratos/src/jetstream/repository/console_config"
-	"github.com/epinio/ui-backend/stratos/src/jetstream/repository/interfaces"
-	"github.com/epinio/ui-backend/stratos/src/jetstream/repository/interfaces/config"
-	"github.com/epinio/ui-backend/stratos/src/jetstream/repository/localusers"
-	"github.com/epinio/ui-backend/stratos/src/jetstream/repository/sessiondata"
-	"github.com/epinio/ui-backend/stratos/src/jetstream/repository/tokens"
+	"github.com/epinio/ui-backend/src/jetstream/crypto"
+	"github.com/epinio/ui-backend/src/jetstream/datastore"
+	"github.com/epinio/ui-backend/src/jetstream/factory"
+	"github.com/epinio/ui-backend/src/jetstream/repository/apikeys"
+	"github.com/epinio/ui-backend/src/jetstream/repository/cnsis"
+	"github.com/epinio/ui-backend/src/jetstream/repository/console_config"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces/config"
+	"github.com/epinio/ui-backend/src/jetstream/repository/localusers"
+	"github.com/epinio/ui-backend/src/jetstream/repository/sessiondata"
+	"github.com/epinio/ui-backend/src/jetstream/repository/tokens"
 )
 
 // @title Stratos API
@@ -994,37 +993,6 @@ func (p *portalProxy) registerRoutes(e *echo.Echo, needSetupMiddleware bool) {
 
 	staticDir, staticDirErr := getStaticFiles(p.Env().String("UI_PATH", "./ui"))
 
-	// Rancher Steve API
-	steve := e.Group("/v1")
-	steve.Use(p.setSecureCacheContentMiddleware)
-	steve.Use(func(h echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			userID, err := p.GetSessionValue(c, "user_id")
-			if err == nil {
-				c.Set("user_id", userID)
-			}
-			return h(c)
-		}
-	})
-	steve.GET("/management.cattle.io.setting", rancher.MgmtSettings)
-	steve.GET("/userpreferences", rancher.GetUserPrefs)
-	steve.GET("/management.cattle.io.cluster", rancher.Clusters)
-
-	// Rancher Norman API
-	norman := e.Group("/v3")
-	norman.Use(p.setSecureCacheContentMiddleware)
-	norman.Use(p.sessionMiddleware())
-
-	norman.GET("/users", rancher.GetUser)
-	norman.POST("/tokens", rancher.TokenLogout)
-	norman.GET("/principals", rancher.GetPrincipals)
-
-	// Rancher Norman public API
-	normanPublic := e.Group("/v3-public")
-	normanPublic.Use(p.setSecureCacheContentMiddleware)
-	normanPublic.POST("/authProviders/local/login", p.consoleLogin)
-	normanPublic.GET("/authProviders", rancher.GetAuthProviders)
-
 	api := e.Group("/api")
 	api.Use(p.setSecureCacheContentMiddleware)
 
@@ -1064,12 +1032,10 @@ func (p *portalProxy) registerRoutes(e *echo.Echo, needSetupMiddleware bool) {
 	sessionGroup := pp.Group("/v1")
 	for _, plugin := range p.Plugins {
 		routePlugin, err := plugin.GetRoutePlugin()
-		log.Warnf("HELLLO1: ", plugin)
 		if err != nil {
 			// Plugin doesn't implement an Endpoint Plugin interface, skip
 			continue
 		}
-		log.Warnf("HELLLO2: ", plugin)
 		routePlugin.AddRootGroupRoutes(sessionGroup)
 	}
 

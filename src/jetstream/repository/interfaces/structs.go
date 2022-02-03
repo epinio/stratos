@@ -157,13 +157,7 @@ type LoginRes struct {
 	User        *ConnectedUser `json:"user"`
 }
 
-type LoginErrorRes struct {
-	BasetType string `json:"baseType"`
-	Status    int64  `json:"status"`
-	Message   string `json:"message"`
-	Code      string `json:"code"`
-	Type      string `json:"type"`
-}
+
 
 type LocalLoginRes struct {
 	User *ConnectedUser `json:"user"`
@@ -268,6 +262,8 @@ const (
 	Remote AuthEndpointType = "remote"
 	//Local - String representation of remote auth endpoint type
 	Local AuthEndpointType = "local"
+	// TODO: RC
+	Epinio AuthEndpointType = "epinio"
 	//AuthNone - String representation of no authentication
 	AuthNone AuthEndpointType = "none"
 )
@@ -277,6 +273,7 @@ const (
 var AuthEndpointTypes = map[string]AuthEndpointType{
 	"remote": Remote,
 	"local":  Local,
+	"epinio":  Epinio,
 	"none":   AuthNone,
 }
 
@@ -302,6 +299,11 @@ func (consoleConfig *ConsoleConfig) IsSetupComplete() bool {
 
 	// No auth, then setup is complete
 	if AuthEndpointTypes[consoleConfig.AuthEndpointType] == AuthNone {
+		return true
+	}
+
+	// Local user - check setup complete
+	if AuthEndpointTypes[consoleConfig.AuthEndpointType] == Epinio {
 		return true
 	}
 

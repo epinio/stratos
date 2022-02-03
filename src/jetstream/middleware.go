@@ -58,7 +58,7 @@ func handleSessionError(config interfaces.PortalConfig, c echo.Context, err erro
 
 	// Send back JSON response and set the header
 	c.Response().Status = http.StatusUnauthorized
-	c.Response().Header().Set("X-Api-Cattle-Auth", "false")
+	c.Response().Header().Set("X-Api-Cattle-Auth", "false") // TODO: RC
 
 	return interfaces.NewHTTPShadowError(
 		http.StatusUnauthorized,
@@ -76,6 +76,11 @@ type (
 		Skipper Skipper
 	}
 )
+
+func (p *portalProxy) SessionMiddleware() echo.MiddlewareFunc {
+
+	return p.sessionMiddleware()
+}
 
 func (p *portalProxy) sessionMiddleware() echo.MiddlewareFunc {
 
@@ -194,6 +199,7 @@ func sessionCleanupMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		log.Debug("sessionCleanupMiddleware")
 		err := h(c)
+		log.Debugf("sessionCleanupMiddleware: %v", err)
 		req := c.Request()
 		context.Clear(req)
 
@@ -224,6 +230,10 @@ func (p *portalProxy) setStaticCacheContentMiddleware(h echo.HandlerFunc) echo.H
 		c.Response().Header().Set("pragma", "no-cache")
 		return h(c)
 	}
+}
+
+func (p *portalProxy) SetSecureCacheContentMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
+	return p.setSecureCacheContentMiddleware(h)
 }
 
 func (p *portalProxy) setSecureCacheContentMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
@@ -260,6 +270,7 @@ func errorLoggingMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		log.Debug("errorLoggingMiddleware")
 		err := h(c)
+		log.Debugf("errorLoggingMiddleware: %v", err)
 		if shadowError, ok := err.(interfaces.ErrHTTPShadow); ok {
 			if len(shadowError.LogMessage) > 0 {
 				log.Error(shadowError.LogMessage)

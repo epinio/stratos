@@ -15,10 +15,10 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/epinio/ui-backend/stratos/src/jetstream/crypto"
-	"github.com/epinio/ui-backend/stratos/src/jetstream/rancher"
-	"github.com/epinio/ui-backend/stratos/src/jetstream/repository/interfaces"
-	"github.com/epinio/ui-backend/stratos/src/jetstream/repository/localusers"
+	"github.com/epinio/ui-backend/src/jetstream/crypto"
+	"github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy" // TODO: RC revert
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/repository/localusers"
 )
 
 //More fields will be moved into here as global portalProxy struct is phased out
@@ -51,16 +51,16 @@ func (a *localAuth) Login(c echo.Context) error {
 
 	if err != nil {
 		//Login failed, return response.
-		resp := &interfaces.LoginErrorRes{
+		resp := &rancherproxy.LoginErrorRes{
 			Type:      "error",
 			BasetType: "error",
 			Code:      "Unauthorized",
-			Status:    401,
+			Status:    401,// TODO: RC
 			Message:   err.Error(),
 		}
 
 		if jsonString, err := json.Marshal(resp); err == nil {
-			c.Response().Status = 401
+			c.Response().Status = 401// TODO: RC
 			c.Response().Header().Set("Content-Type", "application/json")
 			c.Response().Write(jsonString)
 		}
@@ -154,7 +154,7 @@ func (a *localAuth) localLogin(c echo.Context) (string, string, error) {
 		return "", "", err
 	}
 
-	var params rancher.LoginParams
+	var params rancherproxy.LoginParams
 	if err = json.Unmarshal(body, &params); err != nil {
 		return "", "", err
 	}
