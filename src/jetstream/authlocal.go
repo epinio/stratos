@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"math"
 	"net/http"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/cloudfoundry-incubator/stratos/src/jetstream/crypto"
+	"github.com/cloudfoundry-incubator/stratos/src/jetstream/rancher"
 	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
 	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/localusers"
 )
@@ -49,12 +51,21 @@ func (a *localAuth) Login(c echo.Context) error {
 
 	if err != nil {
 		//Login failed, return response.
-		errMessage := err.Error()
-		err := interfaces.NewHTTPShadowError(
-			http.StatusUnauthorized,
-			errMessage,
-			"Login failed: %v", err)
-		return err
+		resp := &interfaces.LoginErrorRes{
+			Type:      "error",
+			BasetType: "error",
+			Code:      "Unauthorized",
+			Status:    401,
+			Message:   err.Error(),
+		}
+
+		if jsonString, err := json.Marshal(resp); err == nil {
+			c.Response().Status = 401
+			c.Response().Header().Set("Content-Type", "application/json")
+			c.Response().Write(jsonString)
+		}
+
+		return nil
 	}
 
 	err = a.generateLoginSuccessResponse(c, userGUID, username)
@@ -137,8 +148,19 @@ func (a *localAuth) VerifySession(c echo.Context, sessionUser string, sessionExp
 func (a *localAuth) localLogin(c echo.Context) (string, string, error) {
 	log.Debug("doLocalLogin")
 
-	username := c.FormValue("username")
-	password := c.FormValue("password")
+	defer c.Request().Body.Close()
+	body, err := ioutil.ReadAll(c.Request().Body)
+	if err != nil {
+		return "", "", err
+	}
+
+	var params rancher.LoginParams
+	if err = json.Unmarshal(body, &params); err != nil {
+		return "", "", err
+	}
+
+	username := params.Username
+	password := params.Password
 
 	if len(username) == 0 || len(password) == 0 {
 		return "", username, errors.New("Needs usernameand password")

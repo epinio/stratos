@@ -157,6 +157,14 @@ type LoginRes struct {
 	User        *ConnectedUser `json:"user"`
 }
 
+type LoginErrorRes struct {
+	BasetType string `json:"baseType"`
+	Status    int64  `json:"status"`
+	Message   string `json:"message"`
+	Code      string `json:"code"`
+	Type      string `json:"type"`
+}
+
 type LocalLoginRes struct {
 	User *ConnectedUser `json:"user"`
 }
