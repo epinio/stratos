@@ -22,8 +22,6 @@ require (
 	github.com/cf-stratos/mysqlstore v0.0.0-20170822100912-304308519d13
 	github.com/charlievieth/fs v0.0.0-20170613215519-7dc373669fa1 // indirect
 	github.com/cloudfoundry-community/go-cfenv v1.17.0
-	github.com/epinio/ui-backend/src/jetstream/plugins/kubernetes v0.0.0-00010101000000-000000000000
-	github.com/epinio/ui-backend/src/jetstream/plugins/monocular v0.0.0-00010101000000-000000000000
 	github.com/cloudfoundry/bosh-cli v5.4.0+incompatible // indirect
 	github.com/cloudfoundry/bosh-utils v0.0.0-20190206192830-9a0affed2bf1 // indirect
 	github.com/cloudfoundry/cli-plugin-repo v0.0.0-20190220174354-ecf721ef3813 // indirect
@@ -34,6 +32,8 @@ require (
 	github.com/dsnet/compress v0.0.0-20171208185109-cc9eb1d7ad76 // indirect
 	github.com/elazarl/goproxy v0.0.0-20200315184450-1f3cb6622dad // indirect
 	github.com/elazarl/goproxy/ext v0.0.0-20200315184450-1f3cb6622dad // indirect
+	github.com/epinio/ui-backend/src/jetstream/plugins/kubernetes v0.0.0-00010101000000-000000000000
+	github.com/epinio/ui-backend/src/jetstream/plugins/monocular v0.0.0-00010101000000-000000000000
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/mock v1.4.4
@@ -65,6 +65,7 @@ require (
 	github.com/onsi/gomega v1.8.1 // indirect
 	github.com/pierrec/lz4 v2.0.5+incompatible // indirect
 	github.com/poy/eachers v0.0.0-20181020210610-23942921fe77 // indirect
+	github.com/rancher/apiserver v0.0.0-20220125032650-a2ef3682eca9 // indirect
 	github.com/sabhiram/go-gitignore v0.0.0-20180611051255-d3107576ba94 // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.4.2
@@ -82,7 +83,6 @@ require (
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.5.0
 	gopkg.in/cheggaaa/pb.v1 v1.0.27 // indirect
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/apiextensions-apiserver v0.0.0 // indirect
 	k8s.io/client-go v9.0.0+incompatible
 	k8s.io/helm v2.16.10+incompatible // indirect
 	k8s.io/kubectl v0.0.0 // indirect
