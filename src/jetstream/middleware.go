@@ -56,6 +56,10 @@ func handleSessionError(config interfaces.PortalConfig, c echo.Context, err erro
 
 	var logMessage = msg + ": %v"
 
+	// Send back JSON response and set the header
+	c.Response().Status = http.StatusUnauthorized
+	c.Response().Header().Set("X-Api-Cattle-Auth", "false")
+
 	return interfaces.NewHTTPShadowError(
 		http.StatusUnauthorized,
 		msg, logMessage, err,

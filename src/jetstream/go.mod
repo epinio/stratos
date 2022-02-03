@@ -1,6 +1,6 @@
 module github.com/epinio/ui-backend/src/jetstream
 
-go 1.12
+go 1.16
 
 require (
 	bitbucket.org/liamstask/goose v0.0.0-20150115234039-8488cc47d90c
