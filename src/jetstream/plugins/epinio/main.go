@@ -3,10 +3,11 @@ package epinio
 import (
 	"errors"
 
-	rancher "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy"
+	rancher "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/api"
 
-
+	steve "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/steve"
 	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
+
 	// "github.com/rancher/apiserver/pkg/types"
 	// v3 "github.com/rancher/rancher/pkg/apis/management.cattle.io/v3"
 
@@ -18,13 +19,12 @@ const (
 	tempEpinioApiUrl = "https://epinio.192.168.16.2.nip.io"
 )
 
-// Analysis - Plugin to allow analysers to run over an endpoint cluster
+// Epinio - Plugin to TODO: RC
 type Epinio struct {
 	portalProxy    interfaces.PortalProxy
-	// analysisServer string
+	epinioApiUrl   string
 }
 
-// []string{"kubernetes"}
 func init() {
 	interfaces.AddPlugin("epinio", nil, Init)
 }
@@ -32,7 +32,10 @@ func init() {
 // Init creates a new Analysis
 func Init(portalProxy interfaces.PortalProxy) (interfaces.StratosPlugin, error) {
 	// store.InitRepositoryProvider(portalProxy.GetConfig().DatabaseProviderName)
-	return &Epinio{portalProxy: portalProxy}, nil
+	return &Epinio{
+		portalProxy: portalProxy,
+		epinioApiUrl: tempEpinioApiUrl,
+	}, nil
 }
 
 // GetMiddlewarePlugin gets the middleware plugin for this plugin
@@ -69,14 +72,16 @@ func (epinio *Epinio) AddRootGroupRoutes(echoGroup *echo.Group) {
 
 	epinioProxy := epinioGroup.Group("/proxy") // TODO: RC
 	epinioProxy.Use(p.SetSecureCacheContentMiddleware)
-	epinioProxy.GET("/ping", epinio.ping) // TODO: RC REMOVE
+	// epinioProxy.GET("/ping", epinio.ping) // TODO: RC REMOVE
+	epinioProxy.GET("/*", epinio.EpinioProxyRequest) // TODO: RC REMOVE
+
 
 	rancherProxy := epinioGroup.Group("/rancher")
 	// Rancher Steve API
-	stevePublic := rancherProxy.Group("/v1")
-	stevePublic.Use(p.SetSecureCacheContentMiddleware)
+	steve := rancherProxy.Group("/v1")
+	steve.Use(p.SetSecureCacheContentMiddleware)
 	// steve.Use(p.SessionMiddleware()) // TODO: RC some of these should be secure (clear cache to see requests)
-	stevePublic.Use(func(h echo.HandlerFunc) echo.HandlerFunc {
+	steve.Use(func(h echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			userID, err := p.GetSessionValue(c, "user_id")
 			if err == nil {
@@ -85,10 +90,12 @@ func (epinio *Epinio) AddRootGroupRoutes(echoGroup *echo.Group) {
 			return h(c)
 		}
 	})
-	stevePublic.GET("/management.cattle.io.setting", rancher.MgmtSettings)
-	stevePublic.GET("/userpreferences", rancher.GetUserPrefs) // TODO: RC this shouldn't be needed before logging in
-	stevePublic.GET("/management.cattle.io.cluster", rancher.Clusters)// TODO: RC this shouldn't be needed before logging in
+	steve.GET("/management.cattle.io.setting", rancher.MgmtSettings)
 
+	steve.GET("/management.cattle.io.cluster", rancher.Clusters)// TODO: RC this shouldn't be needed before logging in
+	steve.Use(p.SessionMiddleware())
+	steve.GET("/schemas", rancher.SteveSchemas)
+	steve.GET("/userpreferences", steve.GetUserPrefs) // TODO: RC this shouldn't be needed before logging in
 
 	// Rancher Norman API
 	norman := rancherProxy.Group("/v3")
@@ -98,6 +105,7 @@ func (epinio *Epinio) AddRootGroupRoutes(echoGroup *echo.Group) {
 	norman.GET("/users", rancher.GetUser)
 	norman.POST("/tokens", rancher.TokenLogout)
 	norman.GET("/principals", rancher.GetPrincipals)
+	steve.GET("/schemas", rancher.NormanSchemas)
 
 	// Rancher Norman public API
 	normanPublic := rancherProxy.Group("/v3-public")
@@ -116,6 +124,7 @@ func (epinio *Epinio) AddRootGroupRoutes(echoGroup *echo.Group) {
 // Init performs plugin initialization
 func (epinio *Epinio) Init() error {
 	// TODO: RC Determine Epinio API url and store
+	// epinio.portalProxy.AddAuthProvider(auth.InitGKEKubeAuth(c.portalProxy))
 
 	return nil
 }

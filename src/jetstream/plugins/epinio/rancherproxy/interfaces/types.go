@@ -1,4 +1,4 @@
-package rancherproxy
+package interfaces
 
 import (
 	"fmt"
@@ -17,6 +17,7 @@ const (
 	AuthProviderResourceType   = "authProvider"
 	UserResourceType           = "user"
 	PrincipalResourceType      = "principal"
+	SchemaType          	   = "schema"
 )
 
 func NewCollection(typ string) *Collection {
@@ -88,6 +89,17 @@ type Setting struct {
 	Value      string `json:"value"`
 	Source     string `json:"source"`
 	Customized bool   `json:"customized"`
+}
+
+type Schema struct {
+	ID         			string            		`json:"id"`
+	Type  				string            		`json:"type"`
+	Links      			map[string]string 		`json:"links"`
+	PluralName			string					`json:"pluralName"`
+	ResourceMethods		[]string 				`json:"resourceMethods"`
+	ResourceFields		map[string]interface{} 	`json:"resourceFields"`
+	CollectionMethods	[]string 				`json:"collectionMethods"`
+	Attributes 			map[string]interface{} 	`json:"attributes"`
 }
 
 type Error struct {

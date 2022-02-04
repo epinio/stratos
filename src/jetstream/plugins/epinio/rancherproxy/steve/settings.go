@@ -1,22 +1,24 @@
-package rancherproxy
+package steve
 
 import (
 	"fmt"
 
 	"github.com/labstack/echo/v4"
+
+	"github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/interfaces"
 )
 
-func NewDefaultSettings(ec echo.Context) *Collection {
-	col := Collection{
-		Type:         CollectionType,
-		ResourceType: SettingsResourceType,
+func NewDefaultSettings(ec echo.Context) *interfaces.Collection {
+	col := interfaces.Collection{
+		Type:         interfaces.CollectionType,
+		ResourceType: interfaces.SettingsResourceType,
 		Actions:      make(map[string]string),
 		Links:        make(map[string]string),
 	}
 
-	col.Links["self"] = GetSelfLink(ec)
+	col.Links["self"] = interfaces.GetSelfLink(ec)
 
-	baseURL := GetSelfLink(ec)
+	baseURL := interfaces.GetSelfLink(ec)
 
 	col.Data = make([]interface{}, 2)
 	col.Data[0] = NewStringSettings(baseURL, "first-login", "false")
@@ -25,9 +27,9 @@ func NewDefaultSettings(ec echo.Context) *Collection {
 	return &col
 }
 
-func NewStringSettings(baseURL, id, value string) *Setting {
+func NewStringSettings(baseURL, id, value string) *interfaces.Setting {
 
-	setting := Setting{}
+	setting := interfaces.Setting{}
 	setting.ID = id
 	setting.APIVersion = "management.cattle.io/v3"
 	setting.Kind = "Setting"

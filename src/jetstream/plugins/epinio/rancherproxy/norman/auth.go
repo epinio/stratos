@@ -1,33 +1,35 @@
-package rancherproxy
+package norman
 
 import (
 	"fmt"
 
 	"github.com/labstack/echo/v4"
+
+	"github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/interfaces"
 )
 
-func NewAuthProvider(ec echo.Context, id string) *Collection {
-	col := Collection{
-		Type:         CollectionType,
-		ResourceType: AuthProviderResourceType,
+func NewAuthProvider(ec echo.Context, id string) *interfaces.Collection {
+	col := interfaces.Collection{
+		Type:         interfaces.CollectionType,
+		ResourceType: interfaces.AuthProviderResourceType,
 		Actions:      make(map[string]string),
 		Links:        make(map[string]string),
 	}
 
-	col.Links["self"] = GetSelfLink(ec)
+	col.Links["self"] = interfaces.GetSelfLink(ec)
 
 	typ := fmt.Sprintf("%sProvider", id)
 
-	ap := AuthProvider{
+	ap := interfaces.AuthProvider{
 		ID:       id,
-		BaseType: AuthProviderResourceType,
+		BaseType: interfaces.AuthProviderResourceType,
 		Type:     typ,
 		Actions:  make(map[string]string),
 		Links:    make(map[string]string),
 	}
 
-	ap.Links["self"] = GetSelfLink(ec, id)
-	ap.Actions["login"] = GetSelfLink(ec, id, "login")
+	ap.Links["self"] = interfaces.GetSelfLink(ec, id)
+	ap.Actions["login"] = interfaces.GetSelfLink(ec, id, "login")
 
 	col.Data = make([]interface{}, 1)
 	col.Data[0] = ap
@@ -35,21 +37,21 @@ func NewAuthProvider(ec echo.Context, id string) *Collection {
 	return &col
 }
 
-func NewUser(baseURL, name string) *Collection {
-	col := Collection{
-		Type:         CollectionType,
-		ResourceType: UserResourceType,
+func NewUser(baseURL, name string) *interfaces.Collection {
+	col := interfaces.Collection{
+		Type:         interfaces.CollectionType,
+		ResourceType: interfaces.UserResourceType,
 		Actions:      make(map[string]string),
 		Links:        make(map[string]string),
 	}
 
 	col.Links["self"] = baseURL
 
-	user := User{
+	user := interfaces.User{
 		ID:                 fmt.Sprintf("user-id-%s", name),
 		UUID:               fmt.Sprintf("user-id-%s", name),
-		BaseType:           UserResourceType,
-		Type:               UserResourceType,
+		BaseType:           interfaces.UserResourceType,
+		Type:               interfaces.UserResourceType,
 		Username:           name,
 		Description:        "",
 		Me:                 true,
@@ -73,21 +75,21 @@ func NewUser(baseURL, name string) *Collection {
 	return &col
 }
 
-func NewPrincipal(baseURL, name string) *Collection {
-	col := Collection{
-		Type:         CollectionType,
-		ResourceType: PrincipalResourceType,
+func NewPrincipal(baseURL, name string) *interfaces.Collection {
+	col := interfaces.Collection{
+		Type:         interfaces.CollectionType,
+		ResourceType: interfaces.PrincipalResourceType,
 		Actions:      make(map[string]string),
 		Links:        make(map[string]string),
 	}
 
 	col.Links["self"] = baseURL
 
-	principal := Principal{
+	principal := interfaces.Principal{
 		ID:            fmt.Sprintf("local://user-id-%s", name),
-		BaseType:      PrincipalResourceType,
-		Type:          PrincipalResourceType,
-		PrincipalType: UserResourceType,
+		BaseType:      interfaces.PrincipalResourceType,
+		Type:          interfaces.PrincipalResourceType,
+		PrincipalType: interfaces.UserResourceType,
 		LoginName:     name,
 		Me:            true,
 		MemberOf:      false,
