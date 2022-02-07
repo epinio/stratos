@@ -19,8 +19,8 @@ env:
   SETUP_GO_VERSION: '1.17'
 
 jobs:
-  linter:
-    runs-on: self-hosted
+  tests:
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
