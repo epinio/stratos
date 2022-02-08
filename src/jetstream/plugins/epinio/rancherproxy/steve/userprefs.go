@@ -36,22 +36,55 @@ func NewUserPref() *interfaces.UserPref {
 }
 
 // Get user profile
+// func GetUserPrefs(c echo.Context) error {
+// 	col := NewUserPrefCollection()
+// 	data := json.RawMessage(DefaultUserPreferences)
+// 	col.Data = make([]interface{}, 1)
+// 	pref := NewUserPref()
+// 	pref.Data = data
+// 	col.Data[0] = pref
+
+// 	host := interfaces.GetBaseURL(c)
+// 	base := fmt.Sprintf("https://%s%s", host, c.Request().URL.String())
+// 	user := fmt.Sprintf("https://%s%s/%s", host, c.Request().URL.String(), interfaces.UserPrefsID)
+
+// 	col.Links["self"] = base
+// 	pref.Links["self"] = user
+// 	pref.Links["remove"] = user
+// 	pref.Links["update"] = user
+
+// 	return c.JSON(http.StatusOK, col)
+// }
 func GetUserPrefs(c echo.Context) error {
 	col := NewUserPrefCollection()
-	data := json.RawMessage(DefaultUserPreferences)
 	col.Data = make([]interface{}, 1)
-	pref := NewUserPref()
-	pref.Data = data
+	pref := createPref(c)
 	col.Data[0] = pref
 
 	host := interfaces.GetBaseURL(c)
 	base := fmt.Sprintf("https://%s%s", host, c.Request().URL.String())
-	user := fmt.Sprintf("https://%s%s/%s", host, c.Request().URL.String(), interfaces.UserPrefsID)
 
 	col.Links["self"] = base
+
+	return c.JSON(http.StatusOK, col)
+}
+
+// Get user profile
+func GetSpecificUserPrefs(c echo.Context) error {
+	return c.JSON(http.StatusOK, createPref(c))
+}
+
+func createPref(c echo.Context) *interfaces.UserPref {
+	data := json.RawMessage(DefaultUserPreferences)
+	pref := NewUserPref()
+	pref.Data = data
+
+	host := interfaces.GetBaseURL(c)
+	user := fmt.Sprintf("https://%s%s/%s", host, c.Request().URL.String(), interfaces.UserPrefsID)
+
 	pref.Links["self"] = user
 	pref.Links["remove"] = user
 	pref.Links["update"] = user
 
-	return c.JSON(http.StatusOK, col)
+	return pref
 }

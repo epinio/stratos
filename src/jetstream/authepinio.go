@@ -2,10 +2,11 @@ package main
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
-	// "errors"
+	"errors"
 	"fmt"
-	// "io/ioutil"
+	"io/ioutil"
 	"math"
 	"net/http"
 	// "strings"
@@ -16,7 +17,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	// "github.com/epinio/ui-backend/src/jetstream/crypto"
-	// "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy"
+	"github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy"
 	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 	// "github.com/epinio/ui-backend/src/jetstream/repository/localusers"
 )
@@ -51,31 +52,34 @@ func (a *epinioAuth) Login(c echo.Context) error {
 		return err
 	}
 
-	//Perform the login and fetch session values if successful
-	// userGUID, username, err := a.localLogin(c) // TODO: RC
-	userGUID := tempUserGuid
-	username := tempUserName
 
-	// if err != nil {
-	// 	//Login failed, return response.
-	// 	resp := &rancherproxy.LoginErrorRes{
-	// 		Type:      "error",
-	// 		BasetType: "error",
-	// 		Code:      "Unauthorized",
-	// 		Status:    401,// TODO: RC
-	// 		Message:   err.Error(),
-	// 	}
+	// authString := fmt.Sprintf("%s:%s", auth.Username, auth.Password)
+	// base64EncodedAuthString := base64.StdEncoding.EncodeToString([]byte(authString))
+    // Perform the login and fetch session values if successful
+	userGUID, username, tr, err := a.localLogin(c)
+	// userGUID := tempUserGuid
+	// username := tempUserName
 
-	// 	if jsonString, err := json.Marshal(resp); err == nil {
-	// 		c.Response().Status = 401// TODO: RC
-	// 		c.Response().Header().Set("Content-Type", "application/json")
-	// 		c.Response().Write(jsonString)
-	// 	}
+	if err != nil {
+		//Login failed, return response.
+		resp := &rancherproxy.LoginErrorRes{
+			Type:      "error",
+			BasetType: "error",
+			Code:      "Unauthorized",
+			Status:    401,// TODO: RC
+			Message:   err.Error(),
+		}
 
-	// 	return nil
-	// }
+		if jsonString, err := json.Marshal(resp); err == nil {
+			c.Response().Status = 401// TODO: RC
+			c.Response().Header().Set("Content-Type", "application/json")
+			c.Response().Write(jsonString)
+		}
 
-	err := a.generateLoginSuccessResponse(c, userGUID, username)
+		return nil
+	}
+
+	err = a.generateLoginSuccessResponse(c, userGUID, tr, username)
 
 	return err
 }
@@ -130,14 +134,14 @@ func (a *epinioAuth) GetUser(userGUID string) (*interfaces.ConnectedUser, error)
 	scopes[1] = "password.write"
 	scopes[2] = "scim.write"
 
-	connectdUser := &interfaces.ConnectedUser{
+	connectedUser := &interfaces.ConnectedUser{
 		GUID:   tempUserGuid,
 		Name:   tempUserName,
 		Admin:  uaaAdmin,
 		Scopes: scopes,
 	}
 
-	return connectdUser, nil
+	return connectedUser, nil
 }
 
 func (a *epinioAuth) BeforeVerifySession(c echo.Context) {}
@@ -156,72 +160,63 @@ func (a *epinioAuth) VerifySession(c echo.Context, sessionUser string, sessionEx
 }
 
 //localLogin verifies local user credentials against our DB
-func (a *epinioAuth) localLogin(c echo.Context) (string, string, error) {
+func (a *epinioAuth) localLogin(c echo.Context) (string, string, *interfaces.TokenRecord, error) {
 	log.Debug("doLocalLogin")
-	return "", "", fmt.Errorf("TODO: RC")
 
-	// defer c.Request().Body.Close()
-	// body, err := ioutil.ReadAll(c.Request().Body)
-	// if err != nil {
-	// 	return "", "", err
-	// }
+	defer c.Request().Body.Close()
+	body, err := ioutil.ReadAll(c.Request().Body)
+	if err != nil {
+		return "", "", nil, err
+	}
 
-	// var params rancherproxy.LoginParams
-	// if err = json.Unmarshal(body, &params); err != nil {
-	// 	return "", "", err
-	// }
+	var params rancherproxy.LoginParams
+	if err = json.Unmarshal(body, &params); err != nil {
+		return "", "", nil, err
+	}
 
-	// username := params.Username
-	// password := params.Password
+	username := params.Username
+	password := params.Password
 
-	// if len(username) == 0 || len(password) == 0 {
-	// 	return "", username, errors.New("Needs usernameand password")
-	// }
+	if len(username) == 0 || len(password) == 0 {
+		return "", username, nil, errors.New("Username and/or password required")
+	}
 
-	// localUsersRepo, err := localusers.NewPgsqlLocalUsersRepository(a.databaseConnectionPool)
-	// if err != nil {
-	// 	log.Errorf("Database error getting repo for Local users: %v", err)
-	// 	return "", username, err
-	// }
+	authString := fmt.Sprintf("%s:%s", username, password)
+	base64EncodedAuthString := base64.StdEncoding.EncodeToString([]byte(authString))
 
-	// var scopeOK bool
-	// var hash []byte
-	// var authError error
-	// var localUserScope string
+	// TODO: RC Wire in to check epinio creds check, for now just accept them
 
-	// // Get the GUID for the specified user
-	// guid, err := localUsersRepo.FindUserGUID(username)
-	// if err != nil {
-	// 	return guid, username, fmt.Errorf("Access Denied - Invalid username/password credentials")
-	// }
 
-	// //Attempt to find the password has for the given user
-	// if hash, authError = localUsersRepo.FindPasswordHash(guid); authError != nil {
-	// 	authError = fmt.Errorf("Access Denied - Invalid username/password credentials")
-	// 	//Check the password hash
-	// } else if authError = crypto.CheckPasswordHash(password, hash); authError != nil {
-	// 	authError = fmt.Errorf("Access Denied - Invalid username/password credentials")
-	// } else {
-	// 	//Ensure the local user has some kind of admin role configured and we check for it here
-	// 	localUserScope, authError = localUsersRepo.FindUserScope(guid)
-	// 	scopeOK = strings.Contains(localUserScope, a.localUserScope)
-	// 	if (authError != nil) || (!scopeOK) {
-	// 		authError = fmt.Errorf("Access Denied - User scope invalid")
-	// 	} else {
-	// 		//Update the last login time here if login was successful
-	// 		loginTime := time.Now()
-	// 		if updateLoginTimeErr := localUsersRepo.UpdateLastLoginTime(guid, loginTime); updateLoginTimeErr != nil {
-	// 			log.Error(updateLoginTimeErr)
-	// 			log.Errorf("Failed to update last login time for user: %s", guid)
-	// 		}
-	// 	}
-	// }
-	// return guid, username, authError
+
+	tr := &interfaces.TokenRecord{
+		AuthType:     interfaces.AuthTypeHttpBasic,
+		AuthToken:    base64EncodedAuthString,
+		RefreshToken: username,
+	}
+
+	return username, username, tr, nil
+
+}
+
+func (e *epinioAuth) saveAuthToken(key string, t interfaces.TokenRecord) error {
+	log.Debug("saveAuthToken")
+
+	tokenRepo, err := e.p.GetStoreFactory().TokenStore()
+	if err != nil {
+		return fmt.Errorf("Database error getting repo for Epinio token: %v", err)
+	}
+
+	err = tokenRepo.SaveAuthToken(key, t, e.p.Config.EncryptionKeyInBytes)
+	if err != nil {
+		return fmt.Errorf("Database error saving Epinio token: %v", err)
+	}
+
+	return nil
 }
 
 //generateLoginSuccessResponse
-func (a *epinioAuth) generateLoginSuccessResponse(c echo.Context, userGUID string, username string) error {
-	log.Debug("generateLoginResponse")
+func (e *epinioAuth) generateLoginSuccessResponse(c echo.Context, userGUID string, token *interfaces.TokenRecord, username string) error {
+	log.Debug("generateLoginSuccessResponse")
 
 	var err error
 	var expiry int64
@@ -234,13 +229,23 @@ func (a *epinioAuth) generateLoginSuccessResponse(c echo.Context, userGUID strin
 	// Ensure that login disregards cookies from the request
 	req := c.Request()
 	req.Header.Set("Cookie", "")
-	if err = a.p.setSessionValues(c, sessionValues); err != nil {
+	if err = e.p.setSessionValues(c, sessionValues); err != nil {
 		return err
 	}
 
 	//Makes sure the client gets the right session expiry time
-	if err = a.p.handleSessionExpiryHeader(c); err != nil {
+	if err = e.p.handleSessionExpiryHeader(c); err != nil {
 		return err
+	}
+
+	err = e.saveAuthToken(userGUID, &token)
+	if err != nil {
+		return err
+	}
+
+	err = e.p.ExecuteLoginHooks(c)
+	if err != nil {
+		log.Warnf("Login hooks failed: %v", err)
 	}
 
 	resp := &interfaces.LoginRes{
@@ -252,7 +257,7 @@ func (a *epinioAuth) generateLoginSuccessResponse(c echo.Context, userGUID strin
 
 	if jsonString, err := json.Marshal(resp); err == nil {
 		// Add XSRF Token
-		a.p.ensureXSRFToken(c)
+		e.p.ensureXSRFToken(c)
 		c.Response().Header().Set("Content-Type", "application/json")
 		c.Response().Write(jsonString)
 	}

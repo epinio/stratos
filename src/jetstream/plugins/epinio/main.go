@@ -2,10 +2,11 @@ package epinio
 
 import (
 	"errors"
+	"fmt"
 
-	rancher "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/api"
+	rancherProxy "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/api"
 
-	steve "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/steve"
+	steveProxy "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/steve"
 	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 
 	// "github.com/rancher/apiserver/pkg/types"
@@ -17,6 +18,7 @@ import (
 
 const (
 	tempEpinioApiUrl = "https://epinio.192.168.16.2.nip.io"
+	EndpointType  = "epinio"
 )
 
 // Epinio - Plugin to TODO: RC
@@ -70,18 +72,9 @@ func (epinio *Epinio) AddRootGroupRoutes(echoGroup *echo.Group) {
 
 	p := epinio.portalProxy
 
-	epinioProxy := epinioGroup.Group("/proxy") // TODO: RC
-	epinioProxy.Use(p.SetSecureCacheContentMiddleware)
-	// epinioProxy.GET("/ping", epinio.ping) // TODO: RC REMOVE
-	epinioProxy.GET("/*", epinio.EpinioProxyRequest) // TODO: RC REMOVE
-
-
-	rancherProxy := epinioGroup.Group("/rancher")
-	// Rancher Steve API
-	steve := rancherProxy.Group("/v1")
-	steve.Use(p.SetSecureCacheContentMiddleware)
-	// steve.Use(p.SessionMiddleware()) // TODO: RC some of these should be secure (clear cache to see requests)
-	steve.Use(func(h echo.HandlerFunc) echo.HandlerFunc {
+	epinioProxyGroup := epinioGroup.Group("/proxy")
+	epinioProxyGroup.Use(p.SetSecureCacheContentMiddleware)
+	epinioProxyGroup.Use(func(h echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			userID, err := p.GetSessionValue(c, "user_id")
 			if err == nil {
@@ -90,33 +83,49 @@ func (epinio *Epinio) AddRootGroupRoutes(echoGroup *echo.Group) {
 			return h(c)
 		}
 	})
-	steve.GET("/management.cattle.io.setting", rancher.MgmtSettings)
+	epinioProxyGroup.GET("/*", epinio.EpinioProxyRequest)
 
-	steve.GET("/management.cattle.io.cluster", rancher.Clusters)// TODO: RC this shouldn't be needed before logging in
-	steve.Use(p.SessionMiddleware())
-	steve.GET("/schemas", rancher.SteveSchemas)
-	steve.GET("/userpreferences", steve.GetUserPrefs) // TODO: RC this shouldn't be needed before logging in
+
+	rancherProxyGroup := epinioGroup.Group("/rancher")
+	// Rancher Steve API
+	steveGroup := rancherProxyGroup.Group("/v1")
+	steveGroup.Use(p.SetSecureCacheContentMiddleware)
+	// steve.Use(p.SessionMiddleware()) // TODO: RC some of these should be secure (clear cache to see requests)
+	steveGroup.Use(func(h echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			userID, err := p.GetSessionValue(c, "user_id")
+			if err == nil {
+				c.Set("user_id", userID)
+			}
+			return h(c)
+		}
+	})
+	steveGroup.GET("/management.cattle.io.setting", rancherProxy.MgmtSettings)
+
+	steveGroup.GET("/management.cattle.io.cluster", rancherProxy.Clusters)// TODO: RC this shouldn't be needed before logging in
+	steveGroup.Use(p.SessionMiddleware())
+	steveGroup.GET("/schemas", rancherProxy.SteveSchemas)
+	steveGroup.GET("/userpreferences", steveProxy.GetUserPrefs) // TODO: RC this shouldn't be needed before logging in
+	steveGroup.PUT("/userpreferences/*", steveProxy.GetSpecificUserPrefs) // TODO: RC what's being sent, and why?
 
 	// Rancher Norman API
-	norman := rancherProxy.Group("/v3")
-	norman.Use(p.SetSecureCacheContentMiddleware)
-	norman.Use(p.SessionMiddleware())
+	normanGroup := rancherProxyGroup.Group("/v3")
+	normanGroup.Use(p.SetSecureCacheContentMiddleware)
+	normanGroup.Use(p.SessionMiddleware())
 
-	norman.GET("/users", rancher.GetUser)
-	norman.POST("/tokens", rancher.TokenLogout)
-	norman.GET("/principals", rancher.GetPrincipals)
-	steve.GET("/schemas", rancher.NormanSchemas)
+	normanGroup.GET("/users", rancherProxy.GetUser)
+	normanGroup.POST("/tokens", rancherProxy.TokenLogout)
+	normanGroup.GET("/principals", rancherProxy.GetPrincipals)
+	normanGroup.GET("/schemas", rancherProxy.NormanSchemas)
 
 	// Rancher Norman public API
-	normanPublic := rancherProxy.Group("/v3-public")
-	normanPublic.Use(p.SetSecureCacheContentMiddleware)
-	normanPublic.POST("/authProviders/local/login", p.ConsoleLogin)
-	normanPublic.GET("/authProviders", rancher.GetAuthProviders)
+	normanPublicGroup := rancherProxyGroup.Group("/v3-public")
+	normanPublicGroup.Use(p.SetSecureCacheContentMiddleware)
+	normanPublicGroup.POST("/authProviders/local/login", p.ConsoleLogin)
+	normanPublicGroup.GET("/authProviders", rancherProxy.GetAuthProviders)
 
 
 
-	// rancherShim := epinioGroup.Group("/rancher")
-	// rancherShim.GET("/v1/management.cattle.io.setting", epinio.rancherMgmtSettings)
 
 
 }
@@ -126,7 +135,138 @@ func (epinio *Epinio) Init() error {
 	// TODO: RC Determine Epinio API url and store
 	// epinio.portalProxy.AddAuthProvider(auth.InitGKEKubeAuth(c.portalProxy))
 
+	cnsiName := "default"
+	apiEndpoint := epinio.epinioApiUrl
+	skipSSLValidation := true
+	fetchInfo := epinio.Info
+
+	epinioCnsi, err := epinio.portalProxy.DoRegisterEndpoint(cnsiName, apiEndpoint, skipSSLValidation, "", "", false, "", fetchInfo)
+	log.Infof("Auto-registering epinio endpoint %s as \"%s\" (%s)", apiEndpoint, cnsiName, epinioCnsi.GUID)
+
+	if err != nil {
+		log.Errorf("Could not auto-register Epinio endpoint: %v. %v", err, epinioCnsi)
+		return nil
+	}
+	log.Errorf("AUTO REGISTERED: %+v", epinioCnsi)//TODO: RC REMOVE
+
+	// Add login hook to automatically register and connect to the Cloud Foundry when the user logs in
+	epinio.portalProxy.AddLoginHook(0, epinio.loginHook)
+
 	return nil
+}
+
+func (epinio *Epinio) Info(apiEndpoint string, skipSSLValidation bool) (interfaces.CNSIRecord, interface{}, error) {
+	log.Debug("Info")
+	v2InfoResponse := interfaces.V2Info{}
+
+	newCNSI := interfaces.CNSIRecord{
+		CNSIType: EndpointType,
+	}
+
+	// uri, err := url.Parse(apiEndpoint)
+	// if err != nil {
+	// 	return newCNSI, nil, err
+	// }
+
+	// uri.Path = "v2/info"
+	// h := c.portalProxy.GetHttpClient(skipSSLValidation)
+
+	// res, err := h.Get(uri.String())
+	// if err != nil {
+	// 	return newCNSI, nil, err
+	// }
+
+	// if res.StatusCode != 200 {
+	// 	buf := &bytes.Buffer{}
+	// 	io.Copy(buf, res.Body)
+	// 	defer res.Body.Close()
+
+	// 	return newCNSI, nil, fmt.Errorf("%s endpoint returned %d\n%s", uri.String(), res.StatusCode, buf)
+	// }
+
+	// dec := json.NewDecoder(res.Body)
+	// if err = dec.Decode(&v2InfoResponse); err != nil {
+	// 	return newCNSI, nil, err
+	// }
+
+	// newCNSI.TokenEndpoint = v2InfoResponse.TokenEndpoint
+	// newCNSI.AuthorizationEndpoint = v2InfoResponse.AuthorizationEndpoint
+	// newCNSI.DopplerLoggingEndpoint = v2InfoResponse.DopplerLoggingEndpoint
+
+	return newCNSI, v2InfoResponse, nil
+}
+
+func (epinio *Epinio) loginHook(context echo.Context) error {
+
+
+	log.Infof("Determining if user should auto-connect to %s.", epinio.epinioApiUrl)
+
+	_, err := epinio.portalProxy.GetSessionStringValue(context, "user_id")
+	if err != nil {
+		return fmt.Errorf("Could not determine user_id from session: %s", err)
+	}
+
+	epinioCnsi, err := epinio.portalProxy.GetCNSIRecordByEndpoint(epinio.epinioApiUrl)
+	if err != nil {
+		err:="Could not find pre-registered epinio instance"
+		log.Warnf(err)
+		return errors.New(err)
+	}
+
+	log.Info("Auto-connecting to the auto-registered endpoint with credentials")
+	_, err = epinio.portalProxy.DoLoginToCNSI(context, epinioCnsi.GUID, false)
+	if err != nil {
+		log.Warnf("Could not auto-connect using credentials to auto-registered endpoint: %s", err.Error())
+		return err
+	}
+	return nil
+}
+
+func (epinio *Epinio) Connect(ec echo.Context, cnsiRecord interfaces.CNSIRecord, userId string) (*interfaces.TokenRecord, bool, error) {
+	log.Info("Epinio Connect...")
+
+	// userID, err := p.GetSessionStringValue(c, "user_id")
+	// if err != nil {
+	// 	return nil, echo.NewHTTPError(http.StatusUnauthorized, "Could not find correct session value")
+	// }
+
+	// TODO: RC error handling
+	sTokenRecord, ok := epinio.portalProxy.GetCNSITokenRecord("STRATOS", userId)
+	if !ok {
+		log.Warnf("Could not fetch stratos log in token")
+		return nil, false, errors.New("Could not fetch stratos log in token")
+	}
+
+	return &sTokenRecord, false, nil
+
+
+	// TODO: RC remove (old way, create auth connect bearer token)
+	// params := new(interfaces.LoginToCNSIParams)
+	// err := interfaces.BindOnce(params, ec)
+	// if err != nil {
+	// 	return nil, false, err
+	// }
+
+	// connectType := params.ConnectType
+	// if len(connectType) == 0 {
+	// 	connectType = interfaces.AuthConnectTypeBearer
+	// }
+
+	// if connectType != interfaces.AuthConnectTypeBearer {
+	// 	return nil, false, errors.New("Only bearer token accepted for Epinio endpoints")
+	// }
+
+	// tokenRec = &interfaces.TokenRecord{
+	// 	AuthToken:     "asdsad", // TODO: RC
+	// 	AuthType:       interfaces.AuthTypeBearer,
+	// }
+	// tokenRecord, err := c.portalProxy.ConnectOAuth2(ec, cnsiRecord)
+	// if err != nil {
+	// 	return nil, false, err
+	// }
+
+
+	// return tokenRecord, cfAdmin, nil
 }
 
 func (epinio *Epinio) ping(ec echo.Context) error {

@@ -202,7 +202,7 @@ func (epinio *Epinio) doRequest(cnsiRequest *interfaces.CNSIRequest, done chan<-
 		tokenRec = cnsiRequest.Token
 	} else {
 		tokenRec = &interfaces.TokenRecord{
-			AuthToken:     "", // TODO: RC
+			AuthToken:     "asdsad", // TODO: RC
 			AuthType:       interfaces.AuthTypeBearer,
 		}
 
@@ -240,14 +240,17 @@ func (epinio *Epinio) doRequest(cnsiRequest *interfaces.CNSIRequest, done chan<-
 		req.Header.Set(longRunningTimeoutHeader, "true")
 	}
 
+	log.Warn("my passthrough: 1")
 	// Find the auth provider for the auth type - default ot oauthflow
 	authHandler := epinio.portalProxy.GetAuthProvider(tokenRec.AuthType)
 	if authHandler.Handler != nil {
+		log.Warn("my passthrough: 2")
 		res, err = authHandler.Handler(cnsiRequest, req)
 	} else {
+		log.Warn("my passthrough: 3")
 		res, err = epinio.portalProxy.DoOAuthFlowRequest(cnsiRequest, req)
 	}
-
+	log.Warn("my passthrough: 4")
 	if err != nil {
 		cnsiRequest.StatusCode = 500
 		cnsiRequest.Status = "Error proxing request"

@@ -74,13 +74,17 @@ type UserPref struct {
 	Links map[string]string `json:"links"`
 }
 
+type Metadata struct {
+	Name       string            `json:"name"`
+}
+
 type APIData struct {
 	APIVersion string            `json:"apiVersion"`
 	Kind       string            `json:"kind"`
 	Type       string            `json:"type"`
 	ID         string            `json:"id"`
 	Links      map[string]string `json:"links"`
-	Metadata   map[string]string `json:"metadata,omitempty"`
+	Metadata   Metadata          `json:"metadata,omitempty"`
 }
 
 type Setting struct {
@@ -138,4 +142,34 @@ type Principal struct {
 	Me            bool              `json:"me"`
 	Provider      string            `json:"provider"`
 	PrincipalType string            `json:"principalType"`
+}
+
+type Cluster struct {
+	APIData
+	Actions        map[string]string `json:"actions"`
+	Spec           map[string]interface{} `json:"spec"`
+	Status         map[string]interface{} `json:"status"`
+
+
+
+	// xAPIVersion string            `json:"apiVersion"`
+	// xKind       string            `json:"kind"`
+	// Type       string            `json:"type"`
+	// xID         string            `json:"id"`
+	// xLinks      map[string]string `json:"links"`
+	// xMetadata   map[string]string `json:"metadata,omitempty"`
+
+
+	// Name          string            `json:"name"`
+	// ID            string            `json:"id"`
+	// LoginName     string            `json:"loginName"`
+	// BaseType      string            `json:"baseType"`
+	// Type          string            `json:"type"`
+	// Data          []interface{}     `json:"data"`
+
+	// Links         map[string]string `json:"links"`
+	// MemberOf      bool              `json:"mustChangePassword"`
+	// Me            bool              `json:"me"`
+	// Provider      string            `json:"provider"`
+	// PrincipalType string            `json:"principalType"`
 }

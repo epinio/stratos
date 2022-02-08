@@ -66,38 +66,45 @@ func GetPrincipals(ec echo.Context) error {
 
 // /v1/management.cattle.io.cluster
 func Clusters(ec echo.Context) error {
-	col := interfaces.Collection{
-		Type:         interfaces.CollectionType,
-		ResourceType: interfaces.ClusterResourceType,
-		Actions:      make(map[string]string),
-		Links:        make(map[string]string),
-		Revision:     "1",
-	}
+	col := steve.NewClusters(ec)
+	// col := interfaces.Collection{
+	// 	Type:         interfaces.CollectionType,
+	// 	ResourceType: interfaces.ClusterResourceType,
+	// 	Actions:      make(map[string]string),
+	// 	Links:        make(map[string]string),
+	// 	Revision:     "1",
+	// }
 
-	col.Links["self"] = interfaces.GetSelfLink(ec)
-	col.Data = make([]interface{}, 0)
+	// col.Links["self"] = interfaces.GetSelfLink(ec)
+	// col.Data = make([]interface{}, 0)
+	// return nil
 
-	sendResponse(ec, col)
+	return sendResponse(ec, col)
 
-	return nil
+
 }
 
 // /v1/schemas
 func SteveSchemas(ec echo.Context) error {
-	col := interfaces.Collection{
-		Type:         interfaces.CollectionType,
-		ResourceType: interfaces.SchemaType,
-		Actions:      make(map[string]string),
-		Links:        make(map[string]string),
-		Revision:     "1",
-	}
 
-	col.Links["self"] = interfaces.GetSelfLink(ec)
-	col.Data = make([]interface{}, 0)
+	col := steve.NewDefaultSchemas(ec)
 
-	sendResponse(ec, col)
+	return sendResponse(ec, col)
 
-	return nil
+	// col := interfaces.Collection{
+	// 	Type:         interfaces.CollectionType,
+	// 	ResourceType: interfaces.SchemaType,
+	// 	Actions:      make(map[string]string),
+	// 	Links:        make(map[string]string),
+	// 	Revision:     "1",
+	// }
+
+	// col.Links["self"] = interfaces.GetSelfLink(ec)
+	// col.Data = make([]interface{}, 0)
+
+	// sendResponse(ec, col)
+
+	// return nil
 }
 
 // /v3/schemas
