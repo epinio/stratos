@@ -1,6 +1,7 @@
 package epinio
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 
@@ -17,7 +18,7 @@ import (
 )
 
 const (
-	tempEpinioApiUrl = "https://epinio.192.168.16.2.nip.io"
+	tempEpinioApiUrl = "https://epinio.172.22.0.2.nip.io"
 	EndpointType  = "epinio"
 )
 
@@ -47,7 +48,20 @@ func (epinio *Epinio) GetMiddlewarePlugin() (interfaces.MiddlewarePlugin, error)
 
 // GetEndpointPlugin gets the endpoint plugin for this plugin
 func (epinio *Epinio) GetEndpointPlugin() (interfaces.EndpointPlugin, error) {
-	return nil, errors.New("Not implemented")
+	return epinio, nil
+}
+
+func (epinio *Epinio) GetType() string {
+	return EndpointType
+}
+
+func (epinio *Epinio) Register(echoContext echo.Context) error {
+	log.Debug("Epinio Register...")
+	return epinio.portalProxy.RegisterEndpoint(echoContext, epinio.Info)
+}
+
+func (epinio *Epinio) Validate(userGUID string, cnsiRecord interfaces.CNSIRecord, tokenRecord interfaces.TokenRecord) error {
+	return nil
 }
 
 // GetRoutePlugin gets the route plugin for this plugin
@@ -93,6 +107,7 @@ func (epinio *Epinio) AddRootGroupRoutes(echoGroup *echo.Group) {
 	// steve.Use(p.SessionMiddleware()) // TODO: RC some of these should be secure (clear cache to see requests)
 	steveGroup.Use(func(h echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
+			// TODO: RC Neil (Q) - get from session and then
 			userID, err := p.GetSessionValue(c, "user_id")
 			if err == nil {
 				c.Set("user_id", userID)
@@ -125,13 +140,16 @@ func (epinio *Epinio) AddRootGroupRoutes(echoGroup *echo.Group) {
 	normanPublicGroup.GET("/authProviders", rancherProxy.GetAuthProviders)
 
 
-
+	// /v1/subscribe
 
 
 }
 
 // Init performs plugin initialization
 func (epinio *Epinio) Init() error {
+		// Add login hook to automatically register and connect to the Cloud Foundry when the user logs in
+		epinio.portalProxy.AddLoginHook(0, epinio.loginHook)
+
 	// TODO: RC Determine Epinio API url and store
 	// epinio.portalProxy.AddAuthProvider(auth.InitGKEKubeAuth(c.portalProxy))
 
@@ -140,17 +158,18 @@ func (epinio *Epinio) Init() error {
 	skipSSLValidation := true
 	fetchInfo := epinio.Info
 
+	// TODO: RC find first... if not there then add
+
 	epinioCnsi, err := epinio.portalProxy.DoRegisterEndpoint(cnsiName, apiEndpoint, skipSSLValidation, "", "", false, "", fetchInfo)
 	log.Infof("Auto-registering epinio endpoint %s as \"%s\" (%s)", apiEndpoint, cnsiName, epinioCnsi.GUID)
 
 	if err != nil {
-		log.Errorf("Could not auto-register Epinio endpoint: %v. %v", err, epinioCnsi)
+		log.Errorf("Could not auto-register Epinio endpoint: %v. %+v", err, epinioCnsi)
 		return nil
 	}
 	log.Errorf("AUTO REGISTERED: %+v", epinioCnsi)//TODO: RC REMOVE
 
-	// Add login hook to automatically register and connect to the Cloud Foundry when the user logs in
-	epinio.portalProxy.AddLoginHook(0, epinio.loginHook)
+
 
 	return nil
 }
@@ -196,10 +215,16 @@ func (epinio *Epinio) Info(apiEndpoint string, skipSSLValidation bool) (interfac
 	return newCNSI, v2InfoResponse, nil
 }
 
+func (epinio *Epinio) UpdateMetadata(info *interfaces.Info, userGUID string, echoContext echo.Context) {
+}
+
 func (epinio *Epinio) loginHook(context echo.Context) error {
 
 
 	log.Infof("Determining if user should auto-connect to %s.", epinio.epinioApiUrl)
+
+
+	log.Errorf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Determining if user should auto-connect to %s.", epinio.epinioApiUrl) // TODO: RC
 
 	_, err := epinio.portalProxy.GetSessionStringValue(context, "user_id")
 	if err != nil {
@@ -229,15 +254,29 @@ func (epinio *Epinio) Connect(ec echo.Context, cnsiRecord interfaces.CNSIRecord,
 	// if err != nil {
 	// 	return nil, echo.NewHTTPError(http.StatusUnauthorized, "Could not find correct session value")
 	// }
-
-	// TODO: RC error handling
-	sTokenRecord, ok := epinio.portalProxy.GetCNSITokenRecord("STRATOS", userId)
-	if !ok {
-		log.Warnf("Could not fetch stratos log in token")
-		return nil, false, errors.New("Could not fetch stratos log in token")
+	username, password, err := rancherProxy.GetRancherUsernameAndPassword(ec)
+	if err != nil {
+		return nil, false, fmt.Errorf("Unable to retrieve username/password from context: %+v", err)
 	}
 
-	return &sTokenRecord, false, nil
+	authString := fmt.Sprintf("%s:%s", username, password)
+	base64EncodedAuthString := base64.StdEncoding.EncodeToString([]byte(authString))
+
+	tr := &interfaces.TokenRecord{
+		AuthType:     interfaces.AuthTypeHttpBasic,
+		AuthToken:    base64EncodedAuthString,
+		RefreshToken: username,
+	}
+
+	// // TODO: RC error handling
+	// sTokenRecord, ok := epinio.portalProxy.GetCNSITokenRecord("STRATOS", userId)
+	// // sTokenRecord.GUID = "JzMZs-yIsJAlVvwrPKJ4BQkF9B0"
+	// if !ok {
+	// 	log.Warnf("Could not fetch stratos log in token")
+	// 	return nil, false, errors.New("Could not fetch stratos log in token")
+	// }
+
+	return tr, false, nil
 
 
 	// TODO: RC remove (old way, create auth connect bearer token)

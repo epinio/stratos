@@ -2,11 +2,11 @@ package main
 
 import (
 	"database/sql"
-	"encoding/base64"
+	// "encoding/base64"
 	"encoding/json"
-	"errors"
-	"fmt"
-	"io/ioutil"
+	// "errors"
+	// "fmt"
+	// "io/ioutil"
 	"math"
 	"net/http"
 	// "strings"
@@ -18,6 +18,8 @@ import (
 
 	// "github.com/epinio/ui-backend/src/jetstream/crypto"
 	"github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy"
+	rancherApi "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/api"
+
 	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 	// "github.com/epinio/ui-backend/src/jetstream/repository/localusers"
 )
@@ -56,7 +58,7 @@ func (a *epinioAuth) Login(c echo.Context) error {
 	// authString := fmt.Sprintf("%s:%s", auth.Username, auth.Password)
 	// base64EncodedAuthString := base64.StdEncoding.EncodeToString([]byte(authString))
     // Perform the login and fetch session values if successful
-	userGUID, username, tr, err := a.localLogin(c)
+	userGUID, username, err := a.localLogin(c)
 	// userGUID := tempUserGuid
 	// username := tempUserName
 
@@ -79,7 +81,7 @@ func (a *epinioAuth) Login(c echo.Context) error {
 		return nil
 	}
 
-	err = a.generateLoginSuccessResponse(c, userGUID, tr, username)
+	err = a.generateLoginSuccessResponse(c, userGUID, username)
 
 	return err
 }
@@ -160,62 +162,37 @@ func (a *epinioAuth) VerifySession(c echo.Context, sessionUser string, sessionEx
 }
 
 //localLogin verifies local user credentials against our DB
-func (a *epinioAuth) localLogin(c echo.Context) (string, string, *interfaces.TokenRecord, error) {
+func (a *epinioAuth) localLogin(c echo.Context) (string, string, error) {
 	log.Debug("doLocalLogin")
 
-	defer c.Request().Body.Close()
-	body, err := ioutil.ReadAll(c.Request().Body)
+	username, _, err := rancherApi.GetRancherUsernameAndPassword(c)
 	if err != nil {
-		return "", "", nil, err
+		return "", "", err
 	}
-
-	var params rancherproxy.LoginParams
-	if err = json.Unmarshal(body, &params); err != nil {
-		return "", "", nil, err
-	}
-
-	username := params.Username
-	password := params.Password
-
-	if len(username) == 0 || len(password) == 0 {
-		return "", username, nil, errors.New("Username and/or password required")
-	}
-
-	authString := fmt.Sprintf("%s:%s", username, password)
-	base64EncodedAuthString := base64.StdEncoding.EncodeToString([]byte(authString))
 
 	// TODO: RC Wire in to check epinio creds check, for now just accept them
 
-
-
-	tr := &interfaces.TokenRecord{
-		AuthType:     interfaces.AuthTypeHttpBasic,
-		AuthToken:    base64EncodedAuthString,
-		RefreshToken: username,
-	}
-
-	return username, username, tr, nil
-
+	return username, username, nil
 }
 
-func (e *epinioAuth) saveAuthToken(key string, t interfaces.TokenRecord) error {
-	log.Debug("saveAuthToken")
+// func (e *epinioAuth) saveAuthToken(key string, t interfaces.TokenRecord) error {
+// 	log.Debug("saveAuthToken")
 
-	tokenRepo, err := e.p.GetStoreFactory().TokenStore()
-	if err != nil {
-		return fmt.Errorf("Database error getting repo for Epinio token: %v", err)
-	}
+// 	tokenRepo, err := e.p.GetStoreFactory().TokenStore()
+// 	if err != nil {
+// 		return fmt.Errorf("Database error getting repo for Epinio token: %v", err)
+// 	}
 
-	err = tokenRepo.SaveAuthToken(key, t, e.p.Config.EncryptionKeyInBytes)
-	if err != nil {
-		return fmt.Errorf("Database error saving Epinio token: %v", err)
-	}
+// 	err = tokenRepo.SaveAuthToken(key, t, e.p.Config.EncryptionKeyInBytes)
+// 	if err != nil {
+// 		return fmt.Errorf("Database error saving Epinio token: %v", err)
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 //generateLoginSuccessResponse
-func (e *epinioAuth) generateLoginSuccessResponse(c echo.Context, userGUID string, token *interfaces.TokenRecord, username string) error {
+func (e *epinioAuth) generateLoginSuccessResponse(c echo.Context, userGUID string, username string) error {
 	log.Debug("generateLoginSuccessResponse")
 
 	var err error
@@ -238,10 +215,10 @@ func (e *epinioAuth) generateLoginSuccessResponse(c echo.Context, userGUID strin
 		return err
 	}
 
-	err = e.saveAuthToken(userGUID, &token)
-	if err != nil {
-		return err
-	}
+	// err = e.saveAuthToken(userGUID, *token)
+	// if err != nil {
+	// 	return err
+	// }
 
 	err = e.p.ExecuteLoginHooks(c)
 	if err != nil {
@@ -250,9 +227,9 @@ func (e *epinioAuth) generateLoginSuccessResponse(c echo.Context, userGUID strin
 
 	resp := &interfaces.LoginRes{
 		Account:     username,
-		TokenExpiry: expiry,
+		TokenExpiry: expiry,// TODO: RC wire in
 		APIEndpoint: nil,
-		Admin:       true,
+		Admin:       false,
 	}
 
 	if jsonString, err := json.Marshal(resp); err == nil {

@@ -22,7 +22,7 @@ func NewDefaultSettings(ec echo.Context) *interfaces.Collection {
 
 	col.Data = make([]interface{}, 2)
 	col.Data[0] = NewStringSettings(baseURL, "first-login", "false")
-	col.Data[1] = NewStringSettings(baseURL, "ui-pl", "rancher")
+	col.Data[1] = NewStringSettings(baseURL, "ui-pl", "Epinio")
 
 	return &col
 }

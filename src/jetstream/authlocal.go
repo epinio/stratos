@@ -163,7 +163,7 @@ func (a *localAuth) localLogin(c echo.Context) (string, string, error) {
 	password := params.Password
 
 	if len(username) == 0 || len(password) == 0 {
-		return "", username, errors.New("Needs usernameand password")
+		return "", username, errors.New("Needs username and password")
 	}
 
 	localUsersRepo, err := localusers.NewPgsqlLocalUsersRepository(a.databaseConnectionPool)

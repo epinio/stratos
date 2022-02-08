@@ -1,3 +1,4 @@
+// TODO: RC REMOVE FILE
 package epinio // TODO: RC make epinioproxy
 
 import (
@@ -78,7 +79,7 @@ func (epinio *Epinio) buildCNSIRequest(cnsiGUID string, userGUID string, method 
 	// }
 
 	// cnsiRequest.URL = new(url.URL)
-	cnsiRequest.URL, _ = url.Parse("https://epinio.192.168.16.2.nip.io")  // TODO: RC *cnsiRec.APIEndpoint
+	cnsiRequest.URL, _ = url.Parse("https://epinio.192.168.16.22222.nip.io")  // TODO: RC *cnsiRec.APIEndpoint
 	// TODO: RC handle err
 
 	// The APIEndpoint might have a path already - so join the request URI to it...
