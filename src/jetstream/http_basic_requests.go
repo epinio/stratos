@@ -15,10 +15,7 @@ func (p *portalProxy) doHttpBasicFlowRequest(cnsiRequest *interfaces.CNSIRequest
 
 	authHandler := func(tokenRec interfaces.TokenRecord, cnsi interfaces.CNSIRecord) (*http.Response, error) {
 		// Http Basic has no token refresh or expiry - so much simpler than the OAuth flow
-		// req.Header.Set("Authorization", "basic "+tokenRec.AuthToken) // TODO: RC Neil - this fails
-		req.Header.Set("authorization", "Basic "+tokenRec.AuthToken) // TODO: RC Neil - this works
-		// log.Errorf("doHttpBasicFlowRequest!!EWRWER: %+v. %+v", tokenRec.AuthToken, req.Header)
-		// log.Errorf("doHttpBasicFlowRequest!!EWRWER: %+v. %+v", req.Header.Get("Authorization"), req.Header.Get("authorization"))
+		req.Header.Set("Authorization", "Basic "+tokenRec.AuthToken)
 
 		client := p.GetHttpClientForRequest(req, cnsi.SkipSSLValidation)
 		return client.Do(req)

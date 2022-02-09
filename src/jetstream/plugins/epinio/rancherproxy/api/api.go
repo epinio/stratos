@@ -132,7 +132,7 @@ func sendResponse(ec echo.Context, obj interface{}) error {
 		return err
 	}
 
-	userID := ec.Get("user_id")
+	userID := ec.Get("user_id") // TODO: RC userID, err := p.GetSessionValue(c, "user_id")
 	isAuthenticated := userID != nil
 
 	ec.Response().Header().Set("X-Api-Cattle-Auth", fmt.Sprintf("%t", isAuthenticated))

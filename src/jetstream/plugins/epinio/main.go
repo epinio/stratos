@@ -18,18 +18,21 @@ import (
 )
 
 const (
+	// TODO: RC these should be calculated (find github issue number)
 	tempEpinioApiUrl = "https://epinio.172.22.0.2.nip.io"
+	tempEpinioApiUrlskipSSLValidation = true
 	EndpointType  = "epinio"
 )
 
-// Epinio - Plugin to TODO: RC
+// Epinio - Plugin
 type Epinio struct {
 	portalProxy    interfaces.PortalProxy
 	epinioApiUrl   string
+	epinioApiUrlskipSSLValidation bool
 }
 
 func init() {
-	interfaces.AddPlugin("epinio", nil, Init)
+	interfaces.AddPlugin(EndpointType, nil, Init)
 }
 
 // Init creates a new Analysis
@@ -38,6 +41,7 @@ func Init(portalProxy interfaces.PortalProxy) (interfaces.StratosPlugin, error) 
 	return &Epinio{
 		portalProxy: portalProxy,
 		epinioApiUrl: tempEpinioApiUrl,
+		epinioApiUrlskipSSLValidation: tempEpinioApiUrlskipSSLValidation,
 	}, nil
 }
 
@@ -107,7 +111,7 @@ func (epinio *Epinio) AddRootGroupRoutes(echoGroup *echo.Group) {
 	// steve.Use(p.SessionMiddleware()) // TODO: RC some of these should be secure (clear cache to see requests)
 	steveGroup.Use(func(h echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			// TODO: RC Neil (Q) - get from session and then
+			// TODO: RC Tech Debt - This was done as there was no pp/session access in the rancher proxy stuff. Can now be fixed
 			userID, err := p.GetSessionValue(c, "user_id")
 			if err == nil {
 				c.Set("user_id", userID)
@@ -153,9 +157,9 @@ func (epinio *Epinio) Init() error {
 	// TODO: RC Determine Epinio API url and store
 	// epinio.portalProxy.AddAuthProvider(auth.InitGKEKubeAuth(c.portalProxy))
 
-	cnsiName := "default"
+	cnsiName := "epinio_default"
 	apiEndpoint := epinio.epinioApiUrl
-	skipSSLValidation := true
+	skipSSLValidation := epinio.epinioApiUrlskipSSLValidation
 	fetchInfo := epinio.Info
 
 	// TODO: RC find first... if not there then add
@@ -250,13 +254,12 @@ func (epinio *Epinio) loginHook(context echo.Context) error {
 func (epinio *Epinio) Connect(ec echo.Context, cnsiRecord interfaces.CNSIRecord, userId string) (*interfaces.TokenRecord, bool, error) {
 	log.Info("Epinio Connect...")
 
-	// userID, err := p.GetSessionStringValue(c, "user_id")
-	// if err != nil {
-	// 	return nil, echo.NewHTTPError(http.StatusUnauthorized, "Could not find correct session value")
-	// }
-	username, password, err := rancherProxy.GetRancherUsernameAndPassword(ec)
-	if err != nil {
-		return nil, false, fmt.Errorf("Unable to retrieve username/password from context: %+v", err)
+	// These are set during log in
+	username := ec.Get("rancher_username").(string)
+	password := ec.Get("rancher_password").(string)
+
+	if len(username) == 0 || len(password) == 0 {
+		return nil, false, errors.New("Username and/or password not present in context")
 	}
 
 	authString := fmt.Sprintf("%s:%s", username, password)
@@ -268,44 +271,7 @@ func (epinio *Epinio) Connect(ec echo.Context, cnsiRecord interfaces.CNSIRecord,
 		RefreshToken: username,
 	}
 
-	// // TODO: RC error handling
-	// sTokenRecord, ok := epinio.portalProxy.GetCNSITokenRecord("STRATOS", userId)
-	// // sTokenRecord.GUID = "JzMZs-yIsJAlVvwrPKJ4BQkF9B0"
-	// if !ok {
-	// 	log.Warnf("Could not fetch stratos log in token")
-	// 	return nil, false, errors.New("Could not fetch stratos log in token")
-	// }
-
 	return tr, false, nil
-
-
-	// TODO: RC remove (old way, create auth connect bearer token)
-	// params := new(interfaces.LoginToCNSIParams)
-	// err := interfaces.BindOnce(params, ec)
-	// if err != nil {
-	// 	return nil, false, err
-	// }
-
-	// connectType := params.ConnectType
-	// if len(connectType) == 0 {
-	// 	connectType = interfaces.AuthConnectTypeBearer
-	// }
-
-	// if connectType != interfaces.AuthConnectTypeBearer {
-	// 	return nil, false, errors.New("Only bearer token accepted for Epinio endpoints")
-	// }
-
-	// tokenRec = &interfaces.TokenRecord{
-	// 	AuthToken:     "asdsad", // TODO: RC
-	// 	AuthType:       interfaces.AuthTypeBearer,
-	// }
-	// tokenRecord, err := c.portalProxy.ConnectOAuth2(ec, cnsiRecord)
-	// if err != nil {
-	// 	return nil, false, err
-	// }
-
-
-	// return tokenRecord, cfAdmin, nil
 }
 
 func (epinio *Epinio) ping(ec echo.Context) error {
