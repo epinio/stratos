@@ -4,21 +4,25 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
 
 	rancherProxy "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/api"
-
 	steveProxy "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/steve"
-	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 
-	// "github.com/rancher/apiserver/pkg/types"
-	// v3 "github.com/rancher/rancher/pkg/apis/management.cattle.io/v3"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 
 	"github.com/labstack/echo/v4"
 	log "github.com/sirupsen/logrus"
 )
 
+// TODO: RC POST FAILS with 401
+// TODO: RC user avatar menu (get correct user, remove parts can't use)
+// TODO: RC check - update token on each log in
+// TODO: RC non-cde
+// 1) update package.json
+
 const (
-	// TODO: RC these should be calculated (find github issue number)
+	// TODO: RC These should come from env or be calculated - https://github.com/epinio/ui/issues/69. Could be done in init or Init?
 	tempEpinioApiUrl = "https://epinio.172.22.0.2.nip.io"
 	tempEpinioApiUrlskipSSLValidation = true
 	EndpointType  = "epinio"
@@ -37,7 +41,6 @@ func init() {
 
 // Init creates a new Analysis
 func Init(portalProxy interfaces.PortalProxy) (interfaces.StratosPlugin, error) {
-	// store.InitRepositoryProvider(portalProxy.GetConfig().DatabaseProviderName)
 	return &Epinio{
 		portalProxy: portalProxy,
 		epinioApiUrl: tempEpinioApiUrl,
@@ -45,9 +48,46 @@ func Init(portalProxy interfaces.PortalProxy) (interfaces.StratosPlugin, error) 
 	}, nil
 }
 
+func (epinio *Epinio) createMiddleware() echo.MiddlewareFunc {
+	return func(h echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+
+			req := c.Request() // TODO: RC fires on all requests
+
+			req.Header.Set("x-cap-cnsi-list", "rAgj2mNgfUEHq6N90b86azw8gbs")
+			req.Header.Set("x-cap-passthrough", "true")
+
+			return h(c)
+		}
+	}
+}
+
+// MiddlewarePlugin interface
+func (epinio *Epinio) EchoMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		return h(c)
+	}
+}
+// MiddlewarePlugin interface
+func (epinio *Epinio) SessionEchoMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		if strings.HasPrefix(c.Request().URL.String(), "/pp/v1/proxy/") {
+			req := c.Request()
+
+			if epinioCnsi, err := epinio.findEpinioEndpoint(); err == nil {
+				req.Header.Set("x-cap-cnsi-list", epinioCnsi.GUID)
+				req.Header.Set("x-cap-passthrough", "true")
+			} else {
+				log.Warn("Failed to find Epinio Endpoint to proxy to. This will probably cause many requests to fail")
+			}
+		}
+		return h(c)
+	}
+}
+
 // GetMiddlewarePlugin gets the middleware plugin for this plugin
 func (epinio *Epinio) GetMiddlewarePlugin() (interfaces.MiddlewarePlugin, error) {
-	return nil, errors.New("Not implemented")
+	return epinio, nil
 }
 
 // GetEndpointPlugin gets the endpoint plugin for this plugin
@@ -65,6 +105,9 @@ func (epinio *Epinio) Register(echoContext echo.Context) error {
 }
 
 func (epinio *Epinio) Validate(userGUID string, cnsiRecord interfaces.CNSIRecord, tokenRecord interfaces.TokenRecord) error {
+	// Validate is used to confirm the user's creds after the user connects
+	// For this flow we don't need to do this, it was done when the user logs in in authepinio
+	// (makes a request to `/api/v1/info`)
 	return nil
 }
 
@@ -84,27 +127,13 @@ func (epinio *Epinio) AddSessionGroupRoutes(echoGroup *echo.Group) {
 }
 
 func (epinio *Epinio) AddRootGroupRoutes(echoGroup *echo.Group) {
-	echoGroup.GET("/ping", epinio.ping) // TODO: RC REMOVE
-
-	epinioGroup := echoGroup.Group("/epinio")
 
 	p := epinio.portalProxy
 
-	epinioProxyGroup := epinioGroup.Group("/proxy")
-	epinioProxyGroup.Use(p.SetSecureCacheContentMiddleware)
-	epinioProxyGroup.Use(func(h echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			userID, err := p.GetSessionValue(c, "user_id")
-			if err == nil {
-				c.Set("user_id", userID)
-			}
-			return h(c)
-		}
-	})
-	epinioProxyGroup.GET("/*", epinio.EpinioProxyRequest)
-
+	epinioGroup := echoGroup.Group("/epinio")
 
 	rancherProxyGroup := epinioGroup.Group("/rancher")
+
 	// Rancher Steve API
 	steveGroup := rancherProxyGroup.Group("/v1")
 	steveGroup.Use(p.SetSecureCacheContentMiddleware)
@@ -131,7 +160,6 @@ func (epinio *Epinio) AddRootGroupRoutes(echoGroup *echo.Group) {
 	normanGroup := rancherProxyGroup.Group("/v3")
 	normanGroup.Use(p.SetSecureCacheContentMiddleware)
 	normanGroup.Use(p.SessionMiddleware())
-
 	normanGroup.GET("/users", rancherProxy.GetUser)
 	normanGroup.POST("/tokens", rancherProxy.TokenLogout)
 	normanGroup.GET("/principals", rancherProxy.GetPrincipals)
@@ -144,15 +172,40 @@ func (epinio *Epinio) AddRootGroupRoutes(echoGroup *echo.Group) {
 	normanPublicGroup.GET("/authProviders", rancherProxy.GetAuthProviders)
 
 
-	// /v1/subscribe
+	// /v1/subscribe // TODO: RC
 
 
 }
 
+func (epinio *Epinio) findEpinioEndpoint() (*interfaces.CNSIRecord, error) {
+	endpoints, err := epinio.portalProxy.ListEndpoints()
+	if err != nil {
+		msg := "Failed to fetch list of endpoints: %+v"
+		log.Errorf(msg, err)
+		return nil, fmt.Errorf(msg, err)
+	}
+
+	var epinioEndpoint *interfaces.CNSIRecord
+	for _, e := range endpoints {
+		if e.CNSIType == "epinio" { // TODO: RC un-hardcode
+			epinioEndpoint = e
+			break;
+		}
+	}
+
+	if epinioEndpoint == nil {
+		msg := "Failed to find an epinio endpoint"
+		log.Error(msg)
+		return nil, fmt.Errorf(msg)
+	}
+
+	return epinioEndpoint, nil
+}
+
 // Init performs plugin initialization
 func (epinio *Epinio) Init() error {
-		// Add login hook to automatically register and connect to the Cloud Foundry when the user logs in
-		epinio.portalProxy.AddLoginHook(0, epinio.loginHook)
+	// Add login hook to automatically register and connect to the Cloud Foundry when the user logs in
+	epinio.portalProxy.AddLoginHook(0, epinio.loginHook)
 
 	// TODO: RC Determine Epinio API url and store
 	// epinio.portalProxy.AddAuthProvider(auth.InitGKEKubeAuth(c.portalProxy))
@@ -163,17 +216,17 @@ func (epinio *Epinio) Init() error {
 	fetchInfo := epinio.Info
 
 	// TODO: RC find first... if not there then add
+	if epinioCnsi, err := epinio.findEpinioEndpoint(); err == nil {
+		log.Infof("Skipping auto-registration of epinio endpoint %s (exists as \"%s\" (%s)", apiEndpoint, cnsiName, epinioCnsi.GUID)
+	} else {
+		epinioCnsi, err := epinio.portalProxy.DoRegisterEndpoint(cnsiName, apiEndpoint, skipSSLValidation, "", "", false, "", fetchInfo)
+		log.Infof("Auto-registering epinio endpoint %s as \"%s\" (%s)", apiEndpoint, cnsiName, epinioCnsi.GUID)
 
-	epinioCnsi, err := epinio.portalProxy.DoRegisterEndpoint(cnsiName, apiEndpoint, skipSSLValidation, "", "", false, "", fetchInfo)
-	log.Infof("Auto-registering epinio endpoint %s as \"%s\" (%s)", apiEndpoint, cnsiName, epinioCnsi.GUID)
-
-	if err != nil {
-		log.Errorf("Could not auto-register Epinio endpoint: %v. %+v", err, epinioCnsi)
-		return nil
+		if err != nil {
+			log.Errorf("Could not auto-register Epinio endpoint: %v. %+v", err, epinioCnsi)
+			return nil
+		}
 	}
-	log.Errorf("AUTO REGISTERED: %+v", epinioCnsi)//TODO: RC REMOVE
-
-
 
 	return nil
 }
@@ -185,36 +238,6 @@ func (epinio *Epinio) Info(apiEndpoint string, skipSSLValidation bool) (interfac
 	newCNSI := interfaces.CNSIRecord{
 		CNSIType: EndpointType,
 	}
-
-	// uri, err := url.Parse(apiEndpoint)
-	// if err != nil {
-	// 	return newCNSI, nil, err
-	// }
-
-	// uri.Path = "v2/info"
-	// h := c.portalProxy.GetHttpClient(skipSSLValidation)
-
-	// res, err := h.Get(uri.String())
-	// if err != nil {
-	// 	return newCNSI, nil, err
-	// }
-
-	// if res.StatusCode != 200 {
-	// 	buf := &bytes.Buffer{}
-	// 	io.Copy(buf, res.Body)
-	// 	defer res.Body.Close()
-
-	// 	return newCNSI, nil, fmt.Errorf("%s endpoint returned %d\n%s", uri.String(), res.StatusCode, buf)
-	// }
-
-	// dec := json.NewDecoder(res.Body)
-	// if err = dec.Decode(&v2InfoResponse); err != nil {
-	// 	return newCNSI, nil, err
-	// }
-
-	// newCNSI.TokenEndpoint = v2InfoResponse.TokenEndpoint
-	// newCNSI.AuthorizationEndpoint = v2InfoResponse.AuthorizationEndpoint
-	// newCNSI.DopplerLoggingEndpoint = v2InfoResponse.DopplerLoggingEndpoint
 
 	return newCNSI, v2InfoResponse, nil
 }
@@ -274,15 +297,4 @@ func (epinio *Epinio) Connect(ec echo.Context, cnsiRecord interfaces.CNSIRecord,
 	return tr, false, nil
 }
 
-func (epinio *Epinio) ping(ec echo.Context) error {
-	// TODO: RC Remove
-	log.Debug("epinio ping")
-
-	var response struct {
-		Status   int
-	}
-	response.Status = 1;
-
-	return ec.JSON(200, response)
-}
 

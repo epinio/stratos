@@ -44,6 +44,9 @@ const (
 	tempUserGuid = "tempUserName"
 )
 
+// TODO: RC Run through this file an error non-implemented methods (check with local auth)
+// Done - VerifySession
+
 //Login provides Local-auth specific Stratos login
 func (a *epinioAuth) Login(c echo.Context) error {
 
@@ -97,51 +100,23 @@ func (a *epinioAuth) Logout(c echo.Context) error {
 func (a *epinioAuth) GetUsername(userid string) (string, error) {
 	log.Debug("GetUsername")
 
-	return tempUserName, nil; // TODO: RC
-
-	// localUsersRepo, err := localusers.NewPgsqlLocalUsersRepository(a.databaseConnectionPool)
-	// if err != nil {
-	// 	log.Errorf("Database error getting repo for Local users: %v", err)
-	// 	return "", err
-	// }
-
-	// localUser, err := localUsersRepo.FindUser(userid)
-	// if err != nil {
-	// 	log.Errorf("Error fetching username for local user %s: %v", userid, err)
-	// 	return "", err
-	// }
-
-	// return localUser.Username, nil
+	return userid, nil; // username == user guid
 }
 
 //GetUser gets the user guid for the specified local user
 func (a *epinioAuth) GetUser(userGUID string) (*interfaces.ConnectedUser, error) {
 	log.Debug("GetUser")
 
-	// localUsersRepo, err := localusers.NewPgsqlLocalUsersRepository(a.databaseConnectionPool)
-	// if err != nil {
-	// 	log.Errorf("Database error getting repo for Local users: %v", err)
-	// 	return nil, err
-	// }
-
-	// user, err := localUsersRepo.FindUser(userGUID)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// uaaAdmin := (user.Scope == a.p.Config.ConsoleConfig.ConsoleAdminScope)
-	uaaAdmin := false
-
 	var scopes []string
 	scopes = make([]string, 3)
-	// scopes[0] = "stratos.admin" // user.Scope // TODO: RC
+	// scopes[0] = "stratos.admin" // User is never admin
 	scopes[0] = "password.write"
 	scopes[1] = "scim.write"
 
 	connectedUser := &interfaces.ConnectedUser{
-		GUID:   tempUserGuid,
-		Name:   tempUserName,
-		Admin:  uaaAdmin,
+		GUID:   userGUID,
+		Name:   userGUID,
+		Admin:  false,
 		Scopes: scopes,
 	}
 
@@ -150,27 +125,11 @@ func (a *epinioAuth) GetUser(userGUID string) (*interfaces.ConnectedUser, error)
 
 func (a *epinioAuth) BeforeVerifySession(c echo.Context) {}
 
-// TODO: RC Run through this file an error non-implemented methods (check with local auth)
-// VerifySession
-
 //VerifySession verifies the session the specified local user, currently just verifies user exists
 func (a *epinioAuth) VerifySession(c echo.Context, sessionUser string, sessionExpireTime int64) error {
-	return nil
+	// TODO: RC Tech Debt - check for user's cnsi token
+	return errors.New("Not implemented")
 }
-
-// func (a *epinioAuth) getEpinioPlugin() (*epinio.Epinio, error) {
-// 	epinioPlugin := a.p.GetPlugin("epinio")// TODO: RC Neil how to export const EndpointType from plugin
-// 	if epinioPlugin == nil {
-// 		return nil, errors.New("Could not find epinio plugin")
-// 	}
-
-// 	epinio, ok := epinioPlugin.GetEndpointPlugin().(epinio.Epinio)
-// 	if !ok {
-// 		return nil, errors.New("Could not find Epinio plugin interface")
-// 	}
-
-// 	return &epinio, nil
-// }
 
 //epinioLogin verifies local user credentials against our DB
 func (a *epinioAuth) epinioLogin(c echo.Context) (string, string, error) {
@@ -218,6 +177,7 @@ func (a *epinioAuth) getRancherUsernameAndPassword(c echo.Context) (string, stri
 func (a *epinioAuth) verifyEpinioCreds(username, password string) (error) {
 	log.Debug("verifyEpinioCreds")
 
+	// TODO: RC use common epinio.findEpinioEndpoint
 	endpoints, err := a.p.ListEndpoints()
 	if err != nil {
 		msg := "Failed to fetch list of endpoints: %+v"
@@ -238,7 +198,6 @@ func (a *epinioAuth) verifyEpinioCreds(username, password string) (error) {
 		log.Error(msg)
 		return fmt.Errorf(msg)
 	}
-	// var epinioApiUrl *url.URL
 
 	credsUrl := fmt.Sprintf("%s/api/v1/info", epinioEndpoint.APIEndpoint.String())
 
@@ -250,7 +209,6 @@ func (a *epinioAuth) verifyEpinioCreds(username, password string) (error) {
 	}
 
 	req.SetBasicAuth(url.QueryEscape(username), url.QueryEscape(password))
-	// req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationForm)
 
 	var h = a.p.GetHttpClientForRequest(req, epinioEndpoint.SkipSSLValidation)
 	res, err := h.Do(req)
@@ -264,24 +222,6 @@ func (a *epinioAuth) verifyEpinioCreds(username, password string) (error) {
 	return nil
 
 }
-//////////
-
-// TODO: RC REMOVE
-// func (e *epinioAuth) saveAuthToken(key string, t interfaces.TokenRecord) error {
-// 	log.Debug("saveAuthToken")
-
-// 	tokenRepo, err := e.p.GetStoreFactory().TokenStore()
-// 	if err != nil {
-// 		return fmt.Errorf("Database error getting repo for Epinio token: %v", err)
-// 	}
-
-// 	err = tokenRepo.SaveAuthToken(key, t, e.p.Config.EncryptionKeyInBytes)
-// 	if err != nil {
-// 		return fmt.Errorf("Database error saving Epinio token: %v", err)
-// 	}
-
-// 	return nil
-// }
 
 //generateLoginSuccessResponse
 func (e *epinioAuth) generateLoginSuccessResponse(c echo.Context, userGUID string, username string) error {
@@ -289,7 +229,7 @@ func (e *epinioAuth) generateLoginSuccessResponse(c echo.Context, userGUID strin
 
 	var err error
 	var expiry int64
-	expiry = math.MaxInt64
+	expiry = math.MaxInt64 // Basic auth type never expires
 
 	sessionValues := make(map[string]interface{})
 	sessionValues["user_id"] = userGUID
@@ -307,11 +247,6 @@ func (e *epinioAuth) generateLoginSuccessResponse(c echo.Context, userGUID strin
 		return err
 	}
 
-	// err = e.saveAuthToken(userGUID, *token)
-	// if err != nil {
-	// 	return err
-	// }
-
 	err = e.p.ExecuteLoginHooks(c)
 	if err != nil {
 		log.Warnf("Login hooks failed: %v", err)
@@ -319,7 +254,7 @@ func (e *epinioAuth) generateLoginSuccessResponse(c echo.Context, userGUID strin
 
 	resp := &interfaces.LoginRes{
 		Account:     username,
-		TokenExpiry: expiry,// TODO: RC wire in
+		TokenExpiry: expiry,
 		APIEndpoint: nil,
 		Admin:       false,
 	}
@@ -356,3 +291,56 @@ func (a *epinioAuth) logout(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, resp)
 }
+
+
+// TODO: RC remove
+// func (a *epinioAuth) getEpinioPlugin() (*epinio.Epinio, error) {
+// 	epinioPlugin := a.p.GetPlugin("epinio")// TODO: RC Neil how to export const EndpointType from plugin
+// 	if epinioPlugin == nil {
+// 		return nil, errors.New("Could not find epinio plugin")
+// 	}
+
+// 	epinio, ok := epinioPlugin.GetEndpointPlugin().(epinio.Epinio)
+// 	if !ok {
+// 		return nil, errors.New("Could not find Epinio plugin interface")
+// 	}
+
+// 	return &epinio, nil
+// }
+
+// func (e *epinioAuth) saveAuthToken(key string, t interfaces.TokenRecord) error {
+// 	log.Debug("saveAuthToken")
+
+// 	tokenRepo, err := e.p.GetStoreFactory().TokenStore()
+// 	if err != nil {
+// 		return fmt.Errorf("Database error getting repo for Epinio token: %v", err)
+// 	}
+
+// 	err = tokenRepo.SaveAuthToken(key, t, e.p.Config.EncryptionKeyInBytes)
+// 	if err != nil {
+// 		return fmt.Errorf("Database error saving Epinio token: %v", err)
+// 	}
+
+// 	return nil
+// }
+
+
+	// // get the uaa token record
+	// uaaTokenRecord, err := a.p.GetUAATokenRecord(userGUID)
+	// if err != nil {
+	// 	msg := "Unable to retrieve UAA token record."
+	// 	log.Error(msg)
+	// 	return nil, fmt.Errorf(msg)
+	// }
+
+	// tokenRepo, err := a.p.GetStoreFactory().TokenStore()
+	// if err != nil {
+	// 	log.Errorf("Database error getting repo for epinio token: %v", err)
+	// 	return interfaces.TokenRecord{}, err
+	// }
+
+	// tr, err := tokenRepo.FindAuthToken(userGUID, a.p.Config.EncryptionKeyInBytes)
+	// if err != nil {
+	// 	log.Errorf("Database error finding UAA token: %v", err)
+	// 	return interfaces.TokenRecord{}, err
+	// }

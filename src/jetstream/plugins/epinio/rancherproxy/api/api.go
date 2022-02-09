@@ -33,7 +33,7 @@ func GetAuthProviders(ec echo.Context) error {
 
 // /v3/authProviders
 func GetUser(ec echo.Context) error {
-	user := norman.NewUser(interfaces.GetBaseURL(ec), "admin")
+	user := norman.NewUser(interfaces.GetBaseURL(ec), ec.Get("user_id").(string))
 
 	return sendResponse(ec, user)
 }
@@ -48,7 +48,7 @@ func TokenLogout(ec echo.Context) error {
 
 // /v3/authProviders
 func GetPrincipals(ec echo.Context) error {
-	principal := norman.NewPrincipal(interfaces.GetBaseURL(ec), "admin")
+	principal := norman.NewPrincipal(interfaces.GetBaseURL(ec), ec.Get("user_id").(string))
 
 	return sendResponse(ec, principal)
 }
