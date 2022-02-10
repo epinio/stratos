@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	// "encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,20 +9,15 @@ import (
 	"math"
 	"net/http"
 	"net/url"
-	// "strings"
-	// "time"
 
 	log "github.com/sirupsen/logrus"
 
 	"github.com/labstack/echo/v4"
 
-	// "github.com/epinio/ui-backend/src/jetstream/crypto"
 	"github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy"
-	// "github.com/epinio/ui-backend/src/jetstream/plugins/epinio"
-	// rancherApi "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/api"
+	eInterfaces "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/interfaces"
 
 	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
-	// "github.com/epinio/ui-backend/src/jetstream/repository/localusers"
 )
 
 //More fields will be moved into here as global portalProxy struct is phased out
@@ -35,8 +29,7 @@ type epinioAuth struct {
 }
 
 func (a *epinioAuth) ShowConfig(config *interfaces.ConsoleConfig) {
-	log.Infof("... Epinio Auth              : %s", true) // TODO: RC
-	// log.Infof("... Local User Scope        : %s", config.LocalUserScope)
+	log.Infof("... Epinio Auth              : %s", true)
 }
 
 const (
@@ -59,13 +52,8 @@ func (a *epinioAuth) Login(c echo.Context) error {
 		return err
 	}
 
-
-	// authString := fmt.Sprintf("%s:%s", auth.Username, auth.Password)
-	// base64EncodedAuthString := base64.StdEncoding.EncodeToString([]byte(authString))
     // Perform the login and fetch session values if successful
 	userGUID, username, err := a.epinioLogin(c)
-	// userGUID := tempUserGuid
-	// username := tempUserName
 
 	if err != nil {
 		//Login failed, return response.
@@ -73,12 +61,12 @@ func (a *epinioAuth) Login(c echo.Context) error {
 			Type:      "error",
 			BasetType: "error",
 			Code:      "Unauthorized",
-			Status:    401,// TODO: RC
+			Status:    http.StatusUnauthorized,
 			Message:   err.Error(),
 		}
 
 		if jsonString, err := json.Marshal(resp); err == nil {
-			c.Response().Status = 401// TODO: RC
+			c.Response().Status = http.StatusUnauthorized
 			c.Response().Header().Set("Content-Type", "application/json")
 			c.Response().Write(jsonString)
 		}
@@ -156,7 +144,6 @@ func (a *epinioAuth) getRancherUsernameAndPassword(c echo.Context) (string, stri
 	}
 
 	var params rancherproxy.LoginParams
-	log.Error("GetRancherUsernameAndPassword: %+v", body)
 	if err = json.Unmarshal(body, &params); err != nil {
 		return "", "", err
 	}
@@ -168,6 +155,7 @@ func (a *epinioAuth) getRancherUsernameAndPassword(c echo.Context) (string, stri
 		return "", username, errors.New("Username and/or password required")
 	}
 
+	// Set these so they're available in the epinio plugin login
 	c.Set("rancher_username", username)
 	c.Set("rancher_password", password)
 
@@ -177,7 +165,7 @@ func (a *epinioAuth) getRancherUsernameAndPassword(c echo.Context) (string, stri
 func (a *epinioAuth) verifyEpinioCreds(username, password string) (error) {
 	log.Debug("verifyEpinioCreds")
 
-	// TODO: RC use common epinio.findEpinioEndpoint
+	// Find the epinio endpoint
 	endpoints, err := a.p.ListEndpoints()
 	if err != nil {
 		msg := "Failed to fetch list of endpoints: %+v"
@@ -187,7 +175,7 @@ func (a *epinioAuth) verifyEpinioCreds(username, password string) (error) {
 
 	var epinioEndpoint *interfaces.CNSIRecord
 	for _, e := range endpoints {
-		if e.CNSIType == "epinio" { // TODO: RC un-hardcode
+		if e.CNSIType == eInterfaces.EndpointType {
 			epinioEndpoint = e
 			break;
 		}
@@ -199,6 +187,7 @@ func (a *epinioAuth) verifyEpinioCreds(username, password string) (error) {
 		return fmt.Errorf(msg)
 	}
 
+	// Make a request to the epinio endpoint that requires auth
 	credsUrl := fmt.Sprintf("%s/api/v1/info", epinioEndpoint.APIEndpoint.String())
 
 	req, err := http.NewRequest("GET", credsUrl, nil)
@@ -224,7 +213,7 @@ func (a *epinioAuth) verifyEpinioCreds(username, password string) (error) {
 }
 
 //generateLoginSuccessResponse
-func (e *epinioAuth) generateLoginSuccessResponse(c echo.Context, userGUID string, username string) error {
+func (e *epinioAuth) generateLoginSuccessResponse(c echo.Context, userGUID, username string) error {
 	log.Debug("generateLoginSuccessResponse")
 
 	var err error
@@ -271,9 +260,6 @@ func (e *epinioAuth) generateLoginSuccessResponse(c echo.Context, userGUID strin
 
 //logout
 func (a *epinioAuth) logout(c echo.Context) error {
-	// TODO: RC Test properly
-	log.Debug("logout")
-
 	a.p.removeEmptyCookie(c)
 
 	// Remove the XSRF Token from the session
@@ -291,56 +277,3 @@ func (a *epinioAuth) logout(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, resp)
 }
-
-
-// TODO: RC remove
-// func (a *epinioAuth) getEpinioPlugin() (*epinio.Epinio, error) {
-// 	epinioPlugin := a.p.GetPlugin("epinio")// TODO: RC Neil how to export const EndpointType from plugin
-// 	if epinioPlugin == nil {
-// 		return nil, errors.New("Could not find epinio plugin")
-// 	}
-
-// 	epinio, ok := epinioPlugin.GetEndpointPlugin().(epinio.Epinio)
-// 	if !ok {
-// 		return nil, errors.New("Could not find Epinio plugin interface")
-// 	}
-
-// 	return &epinio, nil
-// }
-
-// func (e *epinioAuth) saveAuthToken(key string, t interfaces.TokenRecord) error {
-// 	log.Debug("saveAuthToken")
-
-// 	tokenRepo, err := e.p.GetStoreFactory().TokenStore()
-// 	if err != nil {
-// 		return fmt.Errorf("Database error getting repo for Epinio token: %v", err)
-// 	}
-
-// 	err = tokenRepo.SaveAuthToken(key, t, e.p.Config.EncryptionKeyInBytes)
-// 	if err != nil {
-// 		return fmt.Errorf("Database error saving Epinio token: %v", err)
-// 	}
-
-// 	return nil
-// }
-
-
-	// // get the uaa token record
-	// uaaTokenRecord, err := a.p.GetUAATokenRecord(userGUID)
-	// if err != nil {
-	// 	msg := "Unable to retrieve UAA token record."
-	// 	log.Error(msg)
-	// 	return nil, fmt.Errorf(msg)
-	// }
-
-	// tokenRepo, err := a.p.GetStoreFactory().TokenStore()
-	// if err != nil {
-	// 	log.Errorf("Database error getting repo for epinio token: %v", err)
-	// 	return interfaces.TokenRecord{}, err
-	// }
-
-	// tr, err := tokenRepo.FindAuthToken(userGUID, a.p.Config.EncryptionKeyInBytes)
-	// if err != nil {
-	// 	log.Errorf("Database error finding UAA token: %v", err)
-	// 	return interfaces.TokenRecord{}, err
-	// }

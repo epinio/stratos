@@ -8,6 +8,7 @@ import (
 
 	rancherProxy "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/api"
 	steveProxy "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/steve"
+	eInterfaces "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/interfaces"
 
 	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 
@@ -20,12 +21,14 @@ import (
 // TODO: RC check - update token on each log in
 // TODO: RC non-cde
 // 1) update package.json
+// TODO: RC how long does the stratos session last??
+// TODO: RC why so many `Expiring session data` in logs?
 
 const (
 	// TODO: RC These should come from env or be calculated - https://github.com/epinio/ui/issues/69. Could be done in init or Init?
 	tempEpinioApiUrl = "https://epinio.172.22.0.2.nip.io"
 	tempEpinioApiUrlskipSSLValidation = true
-	EndpointType  = "epinio"
+	// EndpointType  = "epinio"
 )
 
 // Epinio - Plugin
@@ -36,7 +39,7 @@ type Epinio struct {
 }
 
 func init() {
-	interfaces.AddPlugin(EndpointType, nil, Init)
+	interfaces.AddPlugin(eInterfaces.EndpointType, nil, Init)
 }
 
 // Init creates a new Analysis
@@ -96,7 +99,7 @@ func (epinio *Epinio) GetEndpointPlugin() (interfaces.EndpointPlugin, error) {
 }
 
 func (epinio *Epinio) GetType() string {
-	return EndpointType
+	return eInterfaces.EndpointType
 }
 
 func (epinio *Epinio) Register(echoContext echo.Context) error {
@@ -152,16 +155,19 @@ func (epinio *Epinio) AddRootGroupRoutes(echoGroup *echo.Group) {
 
 	steveGroup.GET("/management.cattle.io.cluster", rancherProxy.Clusters)// TODO: RC this shouldn't be needed before logging in
 	steveGroup.Use(p.SessionMiddleware())
+	// p.xsrfMiddleware() // TODO: RC N
 	steveGroup.GET("/schemas", rancherProxy.SteveSchemas)
 	steveGroup.GET("/userpreferences", steveProxy.GetUserPrefs) // TODO: RC this shouldn't be needed before logging in
 	steveGroup.PUT("/userpreferences/*", steveProxy.GetSpecificUserPrefs) // TODO: RC what's being sent, and why?
 
 	// Rancher Norman API
 	normanGroup := rancherProxyGroup.Group("/v3")
-	normanGroup.Use(p.SetSecureCacheContentMiddleware)
-	normanGroup.Use(p.SessionMiddleware())
+	normanGroup.Use(p.SetSecureCacheContentMiddleware)  // TODO: RC N
+	normanGroup.Use(p.SessionMiddleware())  // TODO: RC N
 	normanGroup.GET("/users", rancherProxy.GetUser)
-	normanGroup.POST("/tokens", rancherProxy.TokenLogout)
+	normanGroup.POST("/tokens", func(c echo.Context) error {
+		return rancherProxy.TokenLogout(c, p)
+	})
 	normanGroup.GET("/principals", rancherProxy.GetPrincipals)
 	normanGroup.GET("/schemas", rancherProxy.NormanSchemas)
 
@@ -217,7 +223,7 @@ func (epinio *Epinio) Init() error {
 
 	// TODO: RC find first... if not there then add
 	if epinioCnsi, err := epinio.findEpinioEndpoint(); err == nil {
-		log.Infof("Skipping auto-registration of epinio endpoint %s (exists as \"%s\" (%s)", apiEndpoint, cnsiName, epinioCnsi.GUID)
+		log.Infof("Skipping auto-registration of epinio endpoint %s (exists as \"%s\" - %s)", apiEndpoint, cnsiName, epinioCnsi.GUID)
 	} else {
 		epinioCnsi, err := epinio.portalProxy.DoRegisterEndpoint(cnsiName, apiEndpoint, skipSSLValidation, "", "", false, "", fetchInfo)
 		log.Infof("Auto-registering epinio endpoint %s as \"%s\" (%s)", apiEndpoint, cnsiName, epinioCnsi.GUID)
@@ -236,7 +242,7 @@ func (epinio *Epinio) Info(apiEndpoint string, skipSSLValidation bool) (interfac
 	v2InfoResponse := interfaces.V2Info{}
 
 	newCNSI := interfaces.CNSIRecord{
-		CNSIType: EndpointType,
+		CNSIType: eInterfaces.EndpointType,
 	}
 
 	return newCNSI, v2InfoResponse, nil
@@ -246,7 +252,7 @@ func (epinio *Epinio) UpdateMetadata(info *interfaces.Info, userGUID string, ech
 }
 
 func (epinio *Epinio) loginHook(context echo.Context) error {
-
+	// TODO: RC does this update creds on every log in?
 
 	log.Infof("Determining if user should auto-connect to %s.", epinio.epinioApiUrl)
 

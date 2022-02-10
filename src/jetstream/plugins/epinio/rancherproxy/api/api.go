@@ -4,11 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
+
 	// "github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 	"github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/norman"
 	"github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/steve"
 
 	"github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/interfaces"
+	jInterfaces "github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -38,50 +42,24 @@ func GetUser(ec echo.Context) error {
 	return sendResponse(ec, user)
 }
 
-// /v3/authProviders
-func TokenLogout(ec echo.Context) error {
+// /v3/users
+func TokenLogout(ec echo.Context, p jInterfaces.PortalProxy) error {
 	ec.Response().Header().Set("X-Api-Cattle-Auth", "false")
-
-	ec.String(200, "OK")
-	return nil
+	return p.ConsoleLogout(ec)
 }
 
-// /v3/authProviders
+// /v3/principals
 func GetPrincipals(ec echo.Context) error {
 	principal := norman.NewPrincipal(interfaces.GetBaseURL(ec), ec.Get("user_id").(string))
 
 	return sendResponse(ec, principal)
 }
 
-// func Login(authService interfaces.StratosAuth) echo.HandlerFunc {
-// 	return func(ec echo.Context) error {
-// 		return authService.Login((ec))
-// 	}
-// }
-// func EpinioLogin(authService interfaces.StratosAuth) echo.HandlerFunc {
-// 	return func(ec echo.Context) error {
-// 		return authService.Login((ec))
-// 	}
-// }
-
 // /v1/management.cattle.io.cluster
 func Clusters(ec echo.Context) error {
 	col := steve.NewClusters(ec)
-	// col := interfaces.Collection{
-	// 	Type:         interfaces.CollectionType,
-	// 	ResourceType: interfaces.ClusterResourceType,
-	// 	Actions:      make(map[string]string),
-	// 	Links:        make(map[string]string),
-	// 	Revision:     "1",
-	// }
-
-	// col.Links["self"] = interfaces.GetSelfLink(ec)
-	// col.Data = make([]interface{}, 0)
-	// return nil
 
 	return sendResponse(ec, col)
-
-
 }
 
 // /v1/schemas
@@ -90,21 +68,6 @@ func SteveSchemas(ec echo.Context) error {
 	col := steve.NewDefaultSchemas(ec)
 
 	return sendResponse(ec, col)
-
-	// col := interfaces.Collection{
-	// 	Type:         interfaces.CollectionType,
-	// 	ResourceType: interfaces.SchemaType,
-	// 	Actions:      make(map[string]string),
-	// 	Links:        make(map[string]string),
-	// 	Revision:     "1",
-	// }
-
-	// col.Links["self"] = interfaces.GetSelfLink(ec)
-	// col.Data = make([]interface{}, 0)
-
-	// sendResponse(ec, col)
-
-	// return nil
 }
 
 // /v3/schemas

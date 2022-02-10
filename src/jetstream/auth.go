@@ -100,6 +100,10 @@ func (p *portalProxy) consoleLogin(c echo.Context) error {
 	return p.StratosAuthService.Login(c)
 }
 
+func (p *portalProxy) ConsoleLogout(c echo.Context) error {
+	return p.consoleLogout(c)
+}
+
 func (p *portalProxy) consoleLogout(c echo.Context) error {
 	return p.StratosAuthService.Logout(c)
 }
