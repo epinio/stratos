@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"net/http"
 	"strings"
@@ -16,7 +15,6 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/epinio/ui-backend/src/jetstream/crypto"
-	"github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy" // TODO: RC revert
 	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 	"github.com/epinio/ui-backend/src/jetstream/repository/localusers"
 )
@@ -51,21 +49,12 @@ func (a *localAuth) Login(c echo.Context) error {
 
 	if err != nil {
 		//Login failed, return response.
-		resp := &rancherproxy.LoginErrorRes{
-			Type:      "error",
-			BasetType: "error",
-			Code:      "Unauthorized",
-			Status:    401,// TODO: RC
-			Message:   err.Error(),
-		}
-
-		if jsonString, err := json.Marshal(resp); err == nil {
-			c.Response().Status = 401// TODO: RC
-			c.Response().Header().Set("Content-Type", "application/json")
-			c.Response().Write(jsonString)
-		}
-
-		return nil
+		errMessage := err.Error()
+		err := interfaces.NewHTTPShadowError(
+			http.StatusUnauthorized,
+			errMessage,
+			"Login failed: %v", err)
+		return err
 	}
 
 	err = a.generateLoginSuccessResponse(c, userGUID, username)
@@ -148,22 +137,11 @@ func (a *localAuth) VerifySession(c echo.Context, sessionUser string, sessionExp
 func (a *localAuth) localLogin(c echo.Context) (string, string, error) {
 	log.Debug("doLocalLogin")
 
-	defer c.Request().Body.Close()
-	body, err := ioutil.ReadAll(c.Request().Body)
-	if err != nil {
-		return "", "", err
-	}
-
-	var params rancherproxy.LoginParams
-	if err = json.Unmarshal(body, &params); err != nil {
-		return "", "", err
-	}
-
-	username := params.Username
-	password := params.Password
+	username := c.FormValue("username")
+	password := c.FormValue("password")
 
 	if len(username) == 0 || len(password) == 0 {
-		return "", username, errors.New("Needs username and password")
+		return "", username, errors.New("Needs usernameand password")
 	}
 
 	localUsersRepo, err := localusers.NewPgsqlLocalUsersRepository(a.databaseConnectionPool)

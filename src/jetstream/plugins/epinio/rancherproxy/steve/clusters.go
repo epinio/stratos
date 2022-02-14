@@ -21,7 +21,7 @@ func NewClusters(ec echo.Context) *interfaces.Collection {
 	baseURL := interfaces.GetSelfLink(ec)
 
 	col.Data = make([]interface{}, 1)
-	col.Data[0] = NewCluster(baseURL, "local") // TODO: RC tie in with cnsi guid. NO? has to be local
+	col.Data[0] = NewCluster(baseURL, "local")
 
 	return &col
 }

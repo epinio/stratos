@@ -84,7 +84,7 @@ type PortalProxy interface {
 	GetStoreFactory() StoreFactory
 	SetStoreFactory(factory StoreFactory) StoreFactory
 
-	// Epinio shizzle // TODO: RC discuss pattern. Should portalProxy just be passed as an arg?
+	// TODO: RC Neil discuss pattern. Should portalProxy just be passed as an arg?
 	SetSecureCacheContentMiddleware(h echo.HandlerFunc) echo.HandlerFunc
 	SessionMiddleware() echo.MiddlewareFunc
 	ConsoleLogin(c echo.Context) error

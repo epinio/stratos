@@ -68,7 +68,7 @@ func (userInfo *UserInfo) getProvider(c echo.Context) Provider {
 	if interfaces.AuthEndpointTypes[userInfo.portalProxy.GetConfig().AuthEndpointType] == interfaces.Local {
 		return InitLocalUserInfo(userInfo.portalProxy)
 	} else if interfaces.AuthEndpointTypes[userInfo.portalProxy.GetConfig().AuthEndpointType] == interfaces.Epinio {
-		return InitNoAuthUserInfo(userInfo.portalProxy) // TODO: RC avatar
+		return nil
 	} else if interfaces.AuthEndpointTypes[userInfo.portalProxy.GetConfig().AuthEndpointType] == interfaces.AuthNone {
 		return InitNoAuthUserInfo(userInfo.portalProxy)
 	}

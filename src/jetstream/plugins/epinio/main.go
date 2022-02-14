@@ -4,10 +4,13 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
-	rancherProxy "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/api"
+
 	steveProxy "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/steve"
+	normanProxy "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/norman"
 	eInterfaces "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/interfaces"
 
 	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
@@ -16,18 +19,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// TODO: RC POST FAILS with 401
-// TODO: RC user avatar menu (get correct user, remove parts can't use)
-// TODO: RC check - update token on each log in
-// TODO: RC non-code
-// 1) update package.json
-// TODO: RC how long does the stratos session last?? why so many `Expiring session data` in logs?
-
 const (
-	// TODO: RC These should come from env or be calculated - https://github.com/epinio/ui/issues/69. Could be done in init or Init?
-	tempEpinioApiUrl = "https://epinio.172.22.0.2.nip.io"
-	tempEpinioApiUrlskipSSLValidation = true
-	// EndpointType  = "epinio"
+	epinioApiUrlEnv = "EPINIO_API_URL"
+	epinioApiUrlskipSSLValidationEnv = "EPINIO_API_SKIP_SSL"
 )
 
 // Epinio - Plugin
@@ -43,25 +37,28 @@ func init() {
 
 // Init creates a new Analysis
 func Init(portalProxy interfaces.PortalProxy) (interfaces.StratosPlugin, error) {
+	if (interfaces.AuthEndpointTypes[portalProxy.GetConfig().AuthEndpointType] != interfaces.Epinio) {
+		return nil, fmt.Errorf("Epinio plugin requires auth endpoint type of %s", interfaces.Epinio)
+	}
+
+	// TODO: RC Neil - Q - i've seen `p.Env().Lookup("LOCAL_USER")`.. but that;s on a `*portalProxy`, not interface.PortalProxy
+	epinioApiUrl := os.Getenv(epinioApiUrlEnv)
+	if len(epinioApiUrl) == 0 {
+		return nil, fmt.Errorf("Failed to find Epinio API url env `%s`", epinioApiUrlEnv)
+	}
+
+	epinioApiUrlskipSSLValidation, err := strconv.ParseBool(os.Getenv(epinioApiUrlskipSSLValidationEnv))
+	if err != nil {
+		epinioApiUrlskipSSLValidation = false
+	}
+
+	log.Infof("Epinio API url: %s. Skipping SSL Validation: %+v", epinioApiUrl, epinioApiUrlskipSSLValidation)
+
 	return &Epinio{
 		portalProxy: portalProxy,
-		epinioApiUrl: tempEpinioApiUrl,
-		epinioApiUrlskipSSLValidation: tempEpinioApiUrlskipSSLValidation,
+		epinioApiUrl: epinioApiUrl,
+		epinioApiUrlskipSSLValidation: epinioApiUrlskipSSLValidation,
 	}, nil
-}
-
-func (epinio *Epinio) createMiddleware() echo.MiddlewareFunc {
-	return func(h echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-
-			req := c.Request() // TODO: RC fires on all requests
-
-			req.Header.Set("x-cap-cnsi-list", "rAgj2mNgfUEHq6N90b86azw8gbs")
-			req.Header.Set("x-cap-passthrough", "true")
-
-			return h(c)
-		}
-	}
 }
 
 // MiddlewarePlugin interface
@@ -151,10 +148,11 @@ func (epinio *Epinio) AddRootGroupRoutes(echoGroup *echo.Group) {
 
 	rancherProxyGroup := epinioGroup.Group("/rancher")
 
+	// sessionGroup.Use(p.xsrfMiddleware()) // TODO: RC Neil - Q how to tie this in to rancher proxy requests?
+
 	// Rancher Steve API
 	steveGroup := rancherProxyGroup.Group("/v1")
 	steveGroup.Use(p.SetSecureCacheContentMiddleware)
-	// steve.Use(p.SessionMiddleware()) // TODO: RC some of these should be secure (clear cache to see requests)
 	steveGroup.Use(func(h echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			// TODO: RC Tech Debt - This was done as there was no pp/session access in the rancher proxy stuff. Can now be fixed
@@ -165,35 +163,34 @@ func (epinio *Epinio) AddRootGroupRoutes(echoGroup *echo.Group) {
 			return h(c)
 		}
 	})
-	steveGroup.GET("/management.cattle.io.setting", rancherProxy.MgmtSettings)
 
-	steveGroup.GET("/management.cattle.io.cluster", rancherProxy.Clusters)// TODO: RC this shouldn't be needed before logging in
+	// Rancher Steve API (unsecure)
+	steveGroup.GET("/management.cattle.io.setting", steveProxy.MgmtSettings)
+
+	// Rancher Steve API (secure)
 	steveGroup.Use(p.SessionMiddleware())
-	// p.xsrfMiddleware() // TODO: RC N
-	steveGroup.GET("/schemas", rancherProxy.SteveSchemas)
-	steveGroup.GET("/userpreferences", steveProxy.GetUserPrefs) // TODO: RC this shouldn't be needed before logging in
-	steveGroup.PUT("/userpreferences/*", steveProxy.GetSpecificUserPrefs) // TODO: RC what's being sent, and why?
+	steveGroup.GET("/management.cattle.io.cluster", steveProxy.Clusters)
+	steveGroup.GET("/schemas", steveProxy.SteveSchemas)
+	steveGroup.GET("/userpreferences", steveProxy.GetUserPrefs)
+	steveGroup.PUT("/userpreferences/*", steveProxy.GetSpecificUserPrefs)
 
 	// Rancher Norman API
 	normanGroup := rancherProxyGroup.Group("/v3")
-	normanGroup.Use(p.SetSecureCacheContentMiddleware)  // TODO: RC N
-	normanGroup.Use(p.SessionMiddleware())  // TODO: RC N
-	normanGroup.GET("/users", rancherProxy.GetUser)
+	normanGroup.Use(p.SetSecureCacheContentMiddleware)
+	// Rancher Norman API (secure)
+	normanGroup.Use(p.SessionMiddleware())
+	normanGroup.GET("/users", normanProxy.GetUser)
 	normanGroup.POST("/tokens", func(c echo.Context) error {
-		return rancherProxy.TokenLogout(c, p)
+		return normanProxy.TokenLogout(c, p)
 	})
-	normanGroup.GET("/principals", rancherProxy.GetPrincipals)
-	normanGroup.GET("/schemas", rancherProxy.NormanSchemas)
+	normanGroup.GET("/principals", normanProxy.GetPrincipals)
+	normanGroup.GET("/schemas", normanProxy.NormanSchemas)
 
-	// Rancher Norman public API
+	// Rancher Norman API (public)
 	normanPublicGroup := rancherProxyGroup.Group("/v3-public")
 	normanPublicGroup.Use(p.SetSecureCacheContentMiddleware)
 	normanPublicGroup.POST("/authProviders/local/login", p.ConsoleLogin)
-	normanPublicGroup.GET("/authProviders", rancherProxy.GetAuthProviders)
-
-
-	// /v1/subscribe // TODO: RC
-
+	normanPublicGroup.GET("/authProviders", normanProxy.GetAuthProviders)
 
 }
 
@@ -207,7 +204,7 @@ func (epinio *Epinio) findEpinioEndpoint() (*interfaces.CNSIRecord, error) {
 
 	var epinioEndpoint *interfaces.CNSIRecord
 	for _, e := range endpoints {
-		if e.CNSIType == "epinio" { // TODO: RC un-hardcode
+		if e.CNSIType == eInterfaces.EndpointType {
 			epinioEndpoint = e
 			break;
 		}
@@ -227,15 +224,12 @@ func (epinio *Epinio) Init() error {
 	// Add login hook to automatically register and connect to the Cloud Foundry when the user logs in
 	epinio.portalProxy.AddLoginHook(0, epinio.loginHook)
 
-	// TODO: RC Determine Epinio API url and store
-	// epinio.portalProxy.AddAuthProvider(auth.InitGKEKubeAuth(c.portalProxy))
-
 	cnsiName := "epinio_default"
 	apiEndpoint := epinio.epinioApiUrl
 	skipSSLValidation := epinio.epinioApiUrlskipSSLValidation
 	fetchInfo := epinio.Info
 
-	// TODO: RC find first... if not there then add
+	// TODO: RC Neil - Should this update if exists? thinking if the url changes
 	if epinioCnsi, err := epinio.findEpinioEndpoint(); err == nil {
 		log.Infof("Skipping auto-registration of epinio endpoint %s (exists as \"%s\" - %s)", apiEndpoint, cnsiName, epinioCnsi.GUID)
 	} else {
@@ -266,8 +260,6 @@ func (epinio *Epinio) UpdateMetadata(info *interfaces.Info, userGUID string, ech
 }
 
 func (epinio *Epinio) loginHook(context echo.Context) error {
-	// TODO: RC does this update creds on every log in?
-
 	log.Infof("Determining if user should auto-connect to %s.", epinio.epinioApiUrl)
 
 	_, err := epinio.portalProxy.GetSessionStringValue(context, "user_id")

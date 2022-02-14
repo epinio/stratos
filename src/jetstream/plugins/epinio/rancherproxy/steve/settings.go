@@ -21,6 +21,7 @@ func NewDefaultSettings(ec echo.Context) *interfaces.Collection {
 	baseURL := interfaces.GetSelfLink(ec)
 
 	col.Data = make([]interface{}, 2)
+	// Visible to all, regardless of auth
 	col.Data[0] = NewStringSettings(baseURL, "first-login", "false")
 	col.Data[1] = NewStringSettings(baseURL, "ui-pl", "Epinio")
 

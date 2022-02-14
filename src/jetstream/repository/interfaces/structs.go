@@ -262,7 +262,7 @@ const (
 	Remote AuthEndpointType = "remote"
 	//Local - String representation of remote auth endpoint type
 	Local AuthEndpointType = "local"
-	// TODO: RC
+	// TODO: RC Tech Debt. Custom code in common area
 	Epinio AuthEndpointType = "epinio"
 	//AuthNone - String representation of no authentication
 	AuthNone AuthEndpointType = "none"

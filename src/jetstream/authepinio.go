@@ -23,22 +23,12 @@ import (
 //More fields will be moved into here as global portalProxy struct is phased out
 type epinioAuth struct {
 	databaseConnectionPool *sql.DB
-	// localUserScope         string
-	// consoleAdminScope      string
 	p                      *portalProxy
 }
 
 func (a *epinioAuth) ShowConfig(config *interfaces.ConsoleConfig) {
-	log.Infof("... Epinio Auth              : %s", true)
+	log.Infof("... Epinio Auth             : %v", true)
 }
-
-const (
-	tempUserName = "WOOPWOOP" // TODO: RC store username in session (as user_id??)
-	tempUserGuid = "tempUserName"
-)
-
-// TODO: RC Run through this file an error non-implemented methods (check with local auth)
-// Done - VerifySession
 
 //Login provides Local-auth specific Stratos login
 func (a *epinioAuth) Login(c echo.Context) error {
@@ -96,10 +86,7 @@ func (a *epinioAuth) GetUser(userGUID string) (*interfaces.ConnectedUser, error)
 	log.Debug("GetUser")
 
 	var scopes []string
-	scopes = make([]string, 3)
-	// scopes[0] = "stratos.admin" // User is never admin
-	scopes[0] = "password.write"
-	scopes[1] = "scim.write"
+	scopes = make([]string, 0) // User has no stratos scopes such as "stratos.admin", "password.write", "scim.write"
 
 	connectedUser := &interfaces.ConnectedUser{
 		GUID:   userGUID,
@@ -259,7 +246,7 @@ func (e *epinioAuth) generateLoginSuccessResponse(c echo.Context, userGUID, user
 		// c.Response().Header().Set(interfaces.XSRFTokenHeader, token) // TODO: RC Neil - how clear?
 		// cookie.Expires = time.Now().Add(-24 * time.Hour) // TODO: RC Neil - needed?
 		cookie.Domain = e.p.SessionStoreOptions.Domain
-		// cookie.HttpOnly = e.p.SessionStoreOptions.HttpOnly // TODO: RC nuxt $cookies.get doesn't work with this in
+		// cookie.HttpOnly = e.p.SessionStoreOptions.HttpOnly // TODO: RC Neil - nuxt $cookies.get doesn't work with this in
 		cookie.Secure = e.p.SessionStoreOptions.Secure
 		cookie.Path = e.p.SessionStoreOptions.Path
 		cookie.MaxAge = 0

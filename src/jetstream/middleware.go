@@ -58,7 +58,7 @@ func handleSessionError(config interfaces.PortalConfig, c echo.Context, err erro
 
 	// Send back JSON response and set the header
 	c.Response().Status = http.StatusUnauthorized
-	c.Response().Header().Set("X-Api-Cattle-Auth", "false") // TODO: RC
+	c.Response().Header().Set("X-Api-Cattle-Auth", "false") // TODO: RC Tech Debt
 
 	return interfaces.NewHTTPShadowError(
 		http.StatusUnauthorized,
