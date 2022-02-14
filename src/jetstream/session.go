@@ -18,8 +18,6 @@ import (
 
 const (
 
-	// XSRFTokenHeader - XSRF Token Header name
-	XSRFTokenHeader = "X-Xsrf-Token"
 	// XSRFTokenSessionName - XSRF Token Session name
 	XSRFTokenSessionName = "xsrf_token"
 
@@ -241,7 +239,7 @@ func (p *portalProxy) ensureXSRFToken(c echo.Context) {
 	}
 
 	if len(token) > 0 {
-		c.Response().Header().Set(XSRFTokenHeader, token)
+		c.Response().Header().Set(interfaces.XSRFTokenHeader, token)
 	}
 }
 

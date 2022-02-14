@@ -19,10 +19,9 @@ import (
 // TODO: RC POST FAILS with 401
 // TODO: RC user avatar menu (get correct user, remove parts can't use)
 // TODO: RC check - update token on each log in
-// TODO: RC non-cde
+// TODO: RC non-code
 // 1) update package.json
-// TODO: RC how long does the stratos session last??
-// TODO: RC why so many `Expiring session data` in logs?
+// TODO: RC how long does the stratos session last?? why so many `Expiring session data` in logs?
 
 const (
 	// TODO: RC These should come from env or be calculated - https://github.com/epinio/ui/issues/69. Could be done in init or Init?
@@ -77,12 +76,27 @@ func (epinio *Epinio) SessionEchoMiddleware(h echo.HandlerFunc) echo.HandlerFunc
 		if strings.HasPrefix(c.Request().URL.String(), "/pp/v1/proxy/") {
 			req := c.Request()
 
+			// TODO: RC Neil - Q - Rancher sends `x-api-csrf` which is stored in a cookie. Stratos expects `X-Xsrf-Token` which isn't stored in cookie
+			// Basically converting rancher's token to stratos here... then stratos to rancher cookie on log in
+
+			// Automatically assume all proxy requests are for the only epinio instance
+			// In the future, when other epinio instances and products are supported this
+			// will need to change
 			if epinioCnsi, err := epinio.findEpinioEndpoint(); err == nil {
 				req.Header.Set("x-cap-cnsi-list", epinioCnsi.GUID)
 				req.Header.Set("x-cap-passthrough", "true")
+
+				// Swap Rancher's cross-site request forgery token for Stratos's
+				req.Header.Set(interfaces.XSRFTokenHeader, req.Header.Get("x-api-csrf"))
 			} else {
 				log.Warn("Failed to find Epinio Endpoint to proxy to. This will probably cause many requests to fail")
 			}
+
+
+
+			// x-xsrf-token (Stratos - )
+
+			// x-api-csrf: (Rancher - in cookie, added by axios everywhere)
 		}
 		return h(c)
 	}
@@ -255,9 +269,6 @@ func (epinio *Epinio) loginHook(context echo.Context) error {
 	// TODO: RC does this update creds on every log in?
 
 	log.Infof("Determining if user should auto-connect to %s.", epinio.epinioApiUrl)
-
-
-	log.Errorf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Determining if user should auto-connect to %s.", epinio.epinioApiUrl) // TODO: RC
 
 	_, err := epinio.portalProxy.GetSessionStringValue(context, "user_id")
 	if err != nil {

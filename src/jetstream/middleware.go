@@ -169,7 +169,7 @@ func (p *portalProxy) xsrfMiddlewareWithConfig(config MiddlewareConfig) echo.Mid
 			token, err := p.GetSessionStringValue(c, XSRFTokenSessionName)
 			if err == nil {
 				// Check the token against the header
-				requestToken := c.Request().Header.Get(XSRFTokenHeader)
+				requestToken := c.Request().Header.Get(interfaces.XSRFTokenHeader)
 				if len(requestToken) > 0 {
 					if compareTokens(requestToken, token) {
 						return h(c)

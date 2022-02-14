@@ -4,6 +4,11 @@ import (
 	"time"
 )
 
+const (
+	// XSRFTokenHeader - XSRF Token Header name
+	XSRFTokenHeader = "X-Xsrf-Token"
+)
+
 type SessionDataStore interface {
 	GetValues(session, group string) (map[string]string, error)
 	// SetValues replaces existing values for the group (deletes them first)
@@ -14,7 +19,7 @@ type SessionDataStore interface {
 
 	// Cleanup runs a background goroutine every interval that deletes expired sessions from the database
 	Cleanup(interval time.Duration) (chan<- struct{}, <-chan struct{})
-	
+
 	// StopCleanup stops the background cleanup from running
 	StopCleanup(quit chan<- struct{}, done <-chan struct{})
 

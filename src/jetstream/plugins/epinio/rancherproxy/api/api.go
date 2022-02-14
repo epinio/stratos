@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
-
 	// "github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 	"github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/norman"
 	"github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/steve"
