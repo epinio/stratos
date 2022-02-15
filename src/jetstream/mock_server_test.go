@@ -20,8 +20,6 @@ import (
 	"github.com/epinio/ui-backend/src/jetstream/factory"
 	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 	"github.com/epinio/ui-backend/src/jetstream/repository/tokens"
-
-	"github.com/epinio/ui-backend/src/jetstream/plugins/cloudfoundry"
 )
 
 type mockServer struct {
@@ -123,12 +121,6 @@ func setupMockPGStore(db *sql.DB) *mockPGStore {
 	return pgs
 }
 
-func initCFPlugin(pp *portalProxy) interfaces.StratosPlugin {
-	plugin, _ := cloudfoundry.Init(pp)
-
-	return plugin
-}
-
 func setupPortalProxy(db *sql.DB) *portalProxy {
 
 	//_, _ = rand.Read(key)
@@ -150,9 +142,7 @@ func setupPortalProxy(db *sql.DB) *portalProxy {
 
 	pp := newPortalProxy(pc, db, nil, nil, env.NewVarSet())
 	pp.SessionStore = setupMockPGStore(db)
-	initialisedEndpoint := initCFPlugin(pp)
 	pp.Plugins = make(map[string]interfaces.StratosPlugin)
-	pp.Plugins["cf"] = initialisedEndpoint
 
 	pp.SessionStoreOptions = new(sessions.Options)
 	pp.SessionStoreOptions.Domain = "example.org"
@@ -174,20 +164,9 @@ func expectOneRow() sqlmock.Rows {
 	return sqlmock.NewRows([]string{"COUNT(*)"}).AddRow("1")
 }
 
-func expectCFRow() sqlmock.Rows {
-	return sqlmock.NewRows(rowFieldsForCNSI).
-		AddRow(mockCFGUID, "Some fancy CF Cluster", "cf", mockAPIEndpoint, mockAuthEndpoint, mockAuthEndpoint, mockDopplerEndpoint, true, mockClientId, cipherClientSecret, true, "", "")
-}
-
 func expectCERow() sqlmock.Rows {
 	return sqlmock.NewRows(rowFieldsForCNSI).
 		AddRow(mockCEGUID, "Some fancy HCE Cluster", "hce", mockAPIEndpoint, mockAuthEndpoint, mockAuthEndpoint, "", true, mockClientId, cipherClientSecret, true, "", "")
-}
-
-func expectCFAndCERows() sqlmock.Rows {
-	return sqlmock.NewRows(rowFieldsForCNSI).
-		AddRow(mockCFGUID, "Some fancy CF Cluster", "cf", mockAPIEndpoint, mockAuthEndpoint, mockAuthEndpoint, mockDopplerEndpoint, true, mockClientId, cipherClientSecret, false, "", "").
-		AddRow(mockCEGUID, "Some fancy HCE Cluster", "hce", mockAPIEndpoint, mockAuthEndpoint, mockAuthEndpoint, "", true, mockClientId, cipherClientSecret, false, "", "")
 }
 
 func expectTokenRow() sqlmock.Rows {

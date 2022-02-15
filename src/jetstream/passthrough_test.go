@@ -75,19 +75,9 @@ func TestPassthroughDoRequest(t *testing.T) {
 			WithArgs(mockCFGUID, mockUserGUID, mockAdminGUID).
 			WillReturnRows(expectEncryptedTokenRow(pp.Config.EncryptionKeyInBytes))
 
-		//  p.GetCNSIRecord(r.GUID) -> cnsiRepo.Find(guid)
-		mock.ExpectQuery(selectAnyFromCNSIs).
-			WithArgs(mockCFGUID).
-			WillReturnRows(expectCFRow())
-
 		mock.ExpectQuery(selectAnyFromTokens).
 			WithArgs(mockCFGUID, mockUserGUID, mockAdminGUID).
 			WillReturnRows(expectEncryptedTokenRow(pp.Config.EncryptionKeyInBytes))
-
-		//  p.GetCNSIRecord(r.GUID) -> cnsiRepo.Find(guid)
-		mock.ExpectQuery(selectAnyFromCNSIs).
-			WithArgs(mockCFGUID).
-			WillReturnRows(expectCFRow())
 
 		go pp.doRequest(&mockCNSIRequest, done)
 
@@ -232,11 +222,6 @@ func TestPassthroughBuildCNSIRequest(t *testing.T) {
 
 		var ur *url.URL
 		ur, _ = url.Parse(mockAPIEndpoint)
-
-		//  p.GetCNSIRecord(r.GUID) -> cnsiRepo.Find(guid)
-		mock.ExpectQuery(selectAnyFromCNSIs).
-			WithArgs(mockCFGUID).
-			WillReturnRows(expectCFRow())
 
 		cr, err := pp.buildCNSIRequest(expectedCNSIRequest.GUID, expectedCNSIRequest.UserGUID, r.Method, ur, expectedCNSIRequest.Body, expectedCNSIRequest.Header)
 
