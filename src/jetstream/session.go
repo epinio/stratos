@@ -12,14 +12,12 @@ import (
 	"github.com/labstack/echo/v4"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/crypto"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/crypto"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 )
 
 const (
 
-	// XSRFTokenHeader - XSRF Token Header name
-	XSRFTokenHeader = "X-Xsrf-Token"
 	// XSRFTokenSessionName - XSRF Token Session name
 	XSRFTokenSessionName = "xsrf_token"
 
@@ -241,7 +239,7 @@ func (p *portalProxy) ensureXSRFToken(c echo.Context) {
 	}
 
 	if len(token) > 0 {
-		c.Response().Header().Set(XSRFTokenHeader, token)
+		c.Response().Header().Set(interfaces.XSRFTokenHeader, token)
 	}
 }
 

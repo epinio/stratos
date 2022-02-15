@@ -10,11 +10,11 @@ import (
 	uuid "github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/crypto"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/localusers"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/crypto"
+	"github.com/epinio/ui-backend/src/jetstream/repository/localusers"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 	. "github.com/smartystreets/goconvey/convey"
-	
+
 )
 
 const (
@@ -36,7 +36,7 @@ func TestAddLocalUser(t *testing.T) {
 
 		mock.ExpectExec(addLocalUser).WillReturnResult(sqlmock.NewResult(1, 1))
 		guid, err := pp.AddLocalUser(ctx)
-		
+
 		expectedGUIDRow := sqlmock.NewRows([]string{"user_guid"}).AddRow(guid)
         mock.ExpectQuery(findUserGUID).WillReturnRows(expectedGUIDRow)
 		fetchedGUID, err := pp.FindUserGUID(ctx)
@@ -45,7 +45,7 @@ func TestAddLocalUser(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(guid, ShouldEqual, fetchedGUID)
 		})
-		
+
 		Convey("Expectations should be met", func() {
 			So(mock.ExpectationsWereMet(), ShouldBeNil)
 		})
@@ -71,7 +71,7 @@ func TestAddLocalUserMissingUsername(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(guid, ShouldEqual, "")
 		})
-		
+
 		Convey("Expectations should be met", func() {
 			So(mock.ExpectationsWereMet(), ShouldBeNil)
 		})
@@ -97,7 +97,7 @@ func TestAddLocalUserMissingPassword(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(guid, ShouldEqual, "")
 		})
-		
+
 		Convey("Expectations should be met", func() {
 			So(mock.ExpectationsWereMet(), ShouldBeNil)
 		})
@@ -167,7 +167,7 @@ func TestFindPasswordHash(t *testing.T) {
 		password := "changeme"
 		email    := "test.person@somedomain.com"
 		scope    := "stratos.admin"
-		
+
 		//Hash the password
 		generatedPasswordHash, _ := crypto.HashPassword(password)
 
@@ -188,7 +188,7 @@ func TestFindPasswordHash(t *testing.T) {
 		Convey("Password hashes should match", func() {
 			So(fetchedPasswordHash, ShouldResemble, generatedPasswordHash)
 		})
-		
+
 		Convey("Expectations should be met", func() {
 			So(mock.ExpectationsWereMet(), ShouldBeNil)
 		})
@@ -212,7 +212,7 @@ func TestUpdateLastLoginTime(t *testing.T) {
 		password := "changeme"
 		email    := "test.person@somedomain.com"
 		scope    := "stratos.admin"
-		
+
 		//Hash the password
 		generatedPasswordHash, _ := crypto.HashPassword(password)
 
@@ -229,7 +229,7 @@ func TestUpdateLastLoginTime(t *testing.T) {
 
 		mock.ExpectExec(updateLastLoginTime).WillReturnResult(sqlmock.NewResult(1,1))
 		localUsersRepo.UpdateLastLoginTime(userGUID, generatedLoginTime)
-		
+
 		expectedLastLoginTimeRow := sqlmock.NewRows([]string{"login_time"}).AddRow(generatedLoginTime)
 		mock.ExpectQuery(findLastLoginTime).WillReturnRows(expectedLastLoginTimeRow)
 		fetchedLoginTime, _ := localUsersRepo.FindLastLoginTime(userGUID)
@@ -237,7 +237,7 @@ func TestUpdateLastLoginTime(t *testing.T) {
 		Convey("Login times should match", func() {
 			So(fetchedLoginTime, ShouldEqual, generatedLoginTime)
 		})
-		
+
 		Convey("Expectations should be met", func() {
 			So(mock.ExpectationsWereMet(), ShouldBeNil)
 		})

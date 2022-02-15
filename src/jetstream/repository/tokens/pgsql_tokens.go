@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/crypto"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/datastore"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/crypto"
+	"github.com/epinio/ui-backend/src/jetstream/datastore"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 	uuid "github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
 )

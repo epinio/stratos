@@ -3,8 +3,8 @@ package userfavorites
 import (
 	"errors"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/plugins/userfavorites/userfavoritesstore"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/plugins/userfavorites/userfavoritesstore"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 	"github.com/labstack/echo/v4"
 )
 
@@ -37,6 +37,11 @@ func (uf *UserFavorites) GetEndpointPlugin() (interfaces.EndpointPlugin, error) 
 // GetRoutePlugin gets the route plugin for this plugin
 func (uf *UserFavorites) GetRoutePlugin() (interfaces.RoutePlugin, error) {
 	return uf, nil
+}
+
+// GetMiddlewarePlugin gets the middleware plugin for this plugin
+func (uf *UserFavorites) AddRootGroupRoutes(echoGroup *echo.Group) {
+	// no-op
 }
 
 // AddAdminGroupRoutes adds the admin routes for this plugin to the Echo server

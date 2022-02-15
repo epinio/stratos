@@ -9,7 +9,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 )
 
 // LoginHookFunc - function that can be hooked into a successful user login
@@ -29,6 +29,11 @@ func (p *portalProxy) InitStratosAuthService(t interfaces.AuthEndpointType) erro
 		auth = &localAuth{
 			databaseConnectionPool: p.DatabaseConnectionPool,
 			localUserScope:         p.Config.ConsoleConfig.LocalUserScope,
+			p:                      p,
+		}
+	case interfaces.Epinio:
+		auth = &epinioAuth{
+			databaseConnectionPool: p.DatabaseConnectionPool,
 			p:                      p,
 		}
 	case interfaces.Remote:

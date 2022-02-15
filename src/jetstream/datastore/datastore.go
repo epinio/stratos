@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	goosedbversion "github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/goose-db-version"
+	goosedbversion "github.com/epinio/ui-backend/src/jetstream/repository/goose-db-version"
 	"github.com/govau/cf-common/env"
 	log "github.com/sirupsen/logrus"
 

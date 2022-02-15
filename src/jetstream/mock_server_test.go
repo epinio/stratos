@@ -16,12 +16,12 @@ import (
 	"github.com/labstack/echo/v4"
 	sqlmock "gopkg.in/DATA-DOG/go-sqlmock.v1"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/crypto"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/factory"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/tokens"
+	"github.com/epinio/ui-backend/src/jetstream/crypto"
+	"github.com/epinio/ui-backend/src/jetstream/factory"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/repository/tokens"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/plugins/cloudfoundry"
+	"github.com/epinio/ui-backend/src/jetstream/plugins/cloudfoundry"
 )
 
 type mockServer struct {

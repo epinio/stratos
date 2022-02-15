@@ -14,11 +14,11 @@ import (
 	uuid "github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/crypto"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/console_config"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces/config"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/localusers"
+	"github.com/epinio/ui-backend/src/jetstream/crypto"
+	"github.com/epinio/ui-backend/src/jetstream/repository/console_config"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces/config"
+	"github.com/epinio/ui-backend/src/jetstream/repository/localusers"
 )
 
 const (
@@ -273,6 +273,8 @@ func (p *portalProxy) initialiseConsoleConfig(envLookup *env.VarSet) (*interface
 				consoleConfig.AuthorizationEndpoint = consoleConfig.UAAEndpoint
 				log.Debugf("Using UAA Endpoint for Auth Endpoint: %s", consoleConfig.AuthorizationEndpoint)
 			}
+		} else if val == interfaces.Epinio {
+			// No Op
 		} else {
 			//Auth endpoint type has been set to an invalid value
 			return consoleConfig, errors.New("AUTH_ENDPOINT_TYPE must be set to either \"local\" or \"remote\"")

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 	log "github.com/sirupsen/logrus"
 )
 

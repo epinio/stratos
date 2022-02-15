@@ -3,7 +3,7 @@ resources:
   type: git
   source:
     repo: SUSE/stratos-ui
-    uri: https://github.com/cloudfoundry-incubator/stratos.git
+    uri: https://github.com/epinio/ui-backend.git
     branch: all-in-one
 
 - name: aio-image
