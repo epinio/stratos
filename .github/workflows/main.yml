@@ -31,6 +31,9 @@ jobs:
         with:
           go-version: ${{ env.SETUP_GO_VERSION }}
 
+      - name: Setup Deps
+        run: cd src/jetstream && go get github.com/swaggo/swag/cmd/swag@v1.6.7 && swag init
+
       - name: Lint
         run: cd src/jetstream && go vet ./...
 
