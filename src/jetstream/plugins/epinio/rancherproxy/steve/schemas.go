@@ -34,9 +34,9 @@ func NewSchema(baseURL, id string) *interfaces.Schema {
 	setting.Links = make(map[string]string)
 	setting.Links["self"] = fmt.Sprintf("%s/%s", baseURL, id)
 	setting.PluralName = id + "s"
-	setting.ResourceMethods = []string{  }
+	setting.ResourceMethods = []string{}
 	setting.ResourceFields = make(map[string]interface{})
-	setting.CollectionMethods = []string{ "GET" }
+	setting.CollectionMethods = []string{"GET"}
 	setting.Attributes = make(map[string]interface{})
 
 	return &setting

@@ -39,6 +39,11 @@ func (uf *UserFavorites) GetRoutePlugin() (interfaces.RoutePlugin, error) {
 	return uf, nil
 }
 
+// GetMiddlewarePlugin gets the middleware plugin for this plugin
+func (uf *UserFavorites) AddRootGroupRoutes(echoGroup *echo.Group) {
+	// no-op
+}
+
 // AddAdminGroupRoutes adds the admin routes for this plugin to the Echo server
 func (uf *UserFavorites) AddAdminGroupRoutes(echoGroup *echo.Group) {
 	// no-op

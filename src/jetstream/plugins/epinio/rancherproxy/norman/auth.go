@@ -48,8 +48,8 @@ func NewUser(baseURL, name string) *interfaces.Collection {
 	col.Links["self"] = baseURL
 
 	user := interfaces.User{
-		ID:                 fmt.Sprintf("user-id-%s", name),
-		UUID:               fmt.Sprintf("user-id-%s", name),
+		ID:                 fmt.Sprintf("%s", name),
+		UUID:               fmt.Sprintf("%s", name),
 		BaseType:           interfaces.UserResourceType,
 		Type:               interfaces.UserResourceType,
 		Username:           name,
@@ -65,9 +65,6 @@ func NewUser(baseURL, name string) *interfaces.Collection {
 
 	user.PrinicpalIDs = make([]string, 1)
 	user.PrinicpalIDs[0] = fmt.Sprintf("local://%s", user.ID)
-
-	//user.Links["self"] = GetSelfLink(ec, id)
-	//user.Actions["login"] = GetSelfLink(ec, id, "login")
 
 	col.Data = make([]interface{}, 1)
 	col.Data[0] = user
@@ -86,7 +83,7 @@ func NewPrincipal(baseURL, name string) *interfaces.Collection {
 	col.Links["self"] = baseURL
 
 	principal := interfaces.Principal{
-		ID:            fmt.Sprintf("local://user-id-%s", name),
+		ID:            fmt.Sprintf("local://%s", name),
 		BaseType:      interfaces.PrincipalResourceType,
 		Type:          interfaces.PrincipalResourceType,
 		PrincipalType: interfaces.UserResourceType,
@@ -98,9 +95,6 @@ func NewPrincipal(baseURL, name string) *interfaces.Collection {
 		Actions:       make(map[string]string),
 		Links:         make(map[string]string),
 	}
-
-	//user.Links["self"] = GetSelfLink(ec, id)
-	//user.Actions["login"] = GetSelfLink(ec, id, "login")
 
 	col.Data = make([]interface{}, 1)
 	col.Data[0] = principal

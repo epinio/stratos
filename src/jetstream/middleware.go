@@ -199,7 +199,6 @@ func sessionCleanupMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		log.Debug("sessionCleanupMiddleware")
 		err := h(c)
-		log.Debugf("sessionCleanupMiddleware: %v", err)
 		req := c.Request()
 		context.Clear(req)
 
@@ -270,7 +269,6 @@ func errorLoggingMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		log.Debug("errorLoggingMiddleware")
 		err := h(c)
-		log.Debugf("errorLoggingMiddleware: %v", err)
 		if shadowError, ok := err.(interfaces.ErrHTTPShadow); ok {
 			if len(shadowError.LogMessage) > 0 {
 				log.Error(shadowError.LogMessage)

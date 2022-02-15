@@ -7,8 +7,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-const UserPrefsID = "admin"
-
 const (
 	CollectionType             = "collection"
 	UserPreferenceResourceType = "userpreference"
@@ -17,7 +15,7 @@ const (
 	AuthProviderResourceType   = "authProvider"
 	UserResourceType           = "user"
 	PrincipalResourceType      = "principal"
-	SchemaType          	   = "schema"
+	SchemaType                 = "schema"
 )
 
 func NewCollection(typ string) *Collection {
@@ -75,7 +73,7 @@ type UserPref struct {
 }
 
 type Metadata struct {
-	Name       string            `json:"name"`
+	Name string `json:"name"`
 }
 
 type APIData struct {
@@ -96,14 +94,14 @@ type Setting struct {
 }
 
 type Schema struct {
-	ID         			string            		`json:"id"`
-	Type  				string            		`json:"type"`
-	Links      			map[string]string 		`json:"links"`
-	PluralName			string					`json:"pluralName"`
-	ResourceMethods		[]string 				`json:"resourceMethods"`
-	ResourceFields		map[string]interface{} 	`json:"resourceFields"`
-	CollectionMethods	[]string 				`json:"collectionMethods"`
-	Attributes 			map[string]interface{} 	`json:"attributes"`
+	ID                string                 `json:"id"`
+	Type              string                 `json:"type"`
+	Links             map[string]string      `json:"links"`
+	PluralName        string                 `json:"pluralName"`
+	ResourceMethods   []string               `json:"resourceMethods"`
+	ResourceFields    map[string]interface{} `json:"resourceFields"`
+	CollectionMethods []string               `json:"collectionMethods"`
+	Attributes        map[string]interface{} `json:"attributes"`
 }
 
 type Error struct {
@@ -146,30 +144,7 @@ type Principal struct {
 
 type Cluster struct {
 	APIData
-	Actions        map[string]string `json:"actions"`
-	Spec           map[string]interface{} `json:"spec"`
-	Status         map[string]interface{} `json:"status"`
-
-
-
-	// xAPIVersion string            `json:"apiVersion"`
-	// xKind       string            `json:"kind"`
-	// Type       string            `json:"type"`
-	// xID         string            `json:"id"`
-	// xLinks      map[string]string `json:"links"`
-	// xMetadata   map[string]string `json:"metadata,omitempty"`
-
-
-	// Name          string            `json:"name"`
-	// ID            string            `json:"id"`
-	// LoginName     string            `json:"loginName"`
-	// BaseType      string            `json:"baseType"`
-	// Type          string            `json:"type"`
-	// Data          []interface{}     `json:"data"`
-
-	// Links         map[string]string `json:"links"`
-	// MemberOf      bool              `json:"mustChangePassword"`
-	// Me            bool              `json:"me"`
-	// Provider      string            `json:"provider"`
-	// PrincipalType string            `json:"principalType"`
+	Actions map[string]string      `json:"actions"`
+	Spec    map[string]interface{} `json:"spec"`
+	Status  map[string]interface{} `json:"status"`
 }

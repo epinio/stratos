@@ -32,8 +32,6 @@ require (
 	github.com/dsnet/compress v0.0.0-20171208185109-cc9eb1d7ad76 // indirect
 	github.com/elazarl/goproxy v0.0.0-20200315184450-1f3cb6622dad // indirect
 	github.com/elazarl/goproxy/ext v0.0.0-20200315184450-1f3cb6622dad // indirect
-	github.com/epinio/ui-backend/src/jetstream/plugins/kubernetes v0.0.0-00010101000000-000000000000
-	github.com/epinio/ui-backend/src/jetstream/plugins/monocular v0.0.0-00010101000000-000000000000
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/mock v1.4.4
@@ -51,8 +49,10 @@ require (
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
 	github.com/kat-co/vala v0.0.0-20170210184112-42e1d8b61f12
 	github.com/kr/pty v1.1.8 // indirect
+	github.com/kylelemons/go-gypsy v1.0.0 // indirect
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/echo/v4 v4.1.17
+	github.com/lib/pq v1.10.4 // indirect
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/mattn/go-sqlite3 v1.14.5
 	github.com/mholt/archiver v3.1.1+incompatible
@@ -78,6 +78,7 @@ require (
 	github.com/ulikunitz/xz v0.5.6 // indirect
 	github.com/vito/go-interact v0.0.0-20171111012221-fa338ed9e9ec // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
+	github.com/ziutek/mymysql v1.5.4 // indirect
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	google.golang.org/genproto v0.0.0-20200620020550-bd6e04640131 // indirect
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.5.0
@@ -87,10 +88,6 @@ require (
 	k8s.io/helm v2.16.10+incompatible // indirect
 	k8s.io/kubectl v0.0.0 // indirect
 )
-
-replace github.com/epinio/ui-backend/src/jetstream/plugins/kubernetes => ./plugins/kubernetes
-
-replace github.com/epinio/ui-backend/src/jetstream/plugins/monocular => ./plugins/monocular
 
 replace (
 	github.com/SermoDigital/jose => github.com/SermoDigital/jose v0.9.2-0.20180104203859-803625baeddc

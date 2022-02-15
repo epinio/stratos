@@ -14,8 +14,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy"
 	eInterfaces "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy"
 
 	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 )
@@ -42,7 +42,7 @@ func (a *epinioAuth) Login(c echo.Context) error {
 		return err
 	}
 
-    // Perform the login and fetch session values if successful
+	// Perform the login and fetch session values if successful
 	userGUID, username, err := a.epinioLogin(c)
 
 	if err != nil {
@@ -71,6 +71,7 @@ func (a *epinioAuth) Login(c echo.Context) error {
 
 //Logout provides Local-auth specific Stratos login
 func (a *epinioAuth) Logout(c echo.Context) error {
+	log.Debug("Logout")
 	return a.logout(c)
 }
 
@@ -78,7 +79,7 @@ func (a *epinioAuth) Logout(c echo.Context) error {
 func (a *epinioAuth) GetUsername(userid string) (string, error) {
 	log.Debug("GetUsername")
 
-	return userid, nil; // username == user guid
+	return userid, nil // username == user guid
 }
 
 //GetUser gets the user guid for the specified local user
@@ -146,10 +147,10 @@ func (a *epinioAuth) getRancherUsernameAndPassword(c echo.Context) (string, stri
 	c.Set("rancher_username", username)
 	c.Set("rancher_password", password)
 
-	return username, password, nil;
+	return username, password, nil
 }
 
-func (a *epinioAuth) verifyEpinioCreds(username, password string) (error) {
+func (a *epinioAuth) verifyEpinioCreds(username, password string) error {
 	log.Debug("verifyEpinioCreds")
 
 	// Find the epinio endpoint
@@ -164,7 +165,7 @@ func (a *epinioAuth) verifyEpinioCreds(username, password string) (error) {
 	for _, e := range endpoints {
 		if e.CNSIType == eInterfaces.EndpointType {
 			epinioEndpoint = e
-			break;
+			break
 		}
 	}
 

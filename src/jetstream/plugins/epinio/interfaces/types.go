@@ -1,5 +1,5 @@
 package interfaces
 
 const (
-	EndpointType  = "epinio"
+	EndpointType = "epinio"
 )

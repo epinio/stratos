@@ -92,16 +92,8 @@ func (p *portalProxy) login(c echo.Context, skipSSLValidation bool, client strin
 	return uaaRes, u, nil
 }
 
-func (p *portalProxy) ConsoleLogin(c echo.Context) error {
-	return p.consoleLogin(c)
-}
-
 func (p *portalProxy) consoleLogin(c echo.Context) error {
 	return p.StratosAuthService.Login(c)
-}
-
-func (p *portalProxy) ConsoleLogout(c echo.Context) error {
-	return p.consoleLogout(c)
 }
 
 func (p *portalProxy) consoleLogout(c echo.Context) error {

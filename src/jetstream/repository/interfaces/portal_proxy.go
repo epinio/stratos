@@ -84,10 +84,6 @@ type PortalProxy interface {
 	GetStoreFactory() StoreFactory
 	SetStoreFactory(factory StoreFactory) StoreFactory
 
-	// TODO: RC Neil discuss pattern. Should portalProxy just be passed as an arg?
 	SetSecureCacheContentMiddleware(h echo.HandlerFunc) echo.HandlerFunc
 	SessionMiddleware() echo.MiddlewareFunc
-	ConsoleLogin(c echo.Context) error
-	ConsoleLogout(c echo.Context) error
-
 }

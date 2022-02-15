@@ -1,8 +1,6 @@
 package norman
 
 import (
-
-	// "github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 	"github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/api"
 
 	"github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/interfaces"
@@ -10,7 +8,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 )
-
 
 // Get the available auth providers
 // /v3/authProviders
@@ -30,7 +27,7 @@ func GetUser(ec echo.Context) error {
 // /v3/users
 func TokenLogout(ec echo.Context, p jInterfaces.PortalProxy) error {
 	ec.Response().Header().Set("X-Api-Cattle-Auth", "false")
-	return p.ConsoleLogout(ec)
+	return p.GetStratosAuthService().Logout(ec)
 }
 
 // /v3/principals
