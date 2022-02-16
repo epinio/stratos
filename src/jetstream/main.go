@@ -597,8 +597,8 @@ func loadPortalConfig(pc interfaces.PortalConfig, env *env.VarSet) (interfaces.P
 	}
 
 	if len(pc.AuthEndpointType) == 0 {
-		//Default to "remote" if AUTH_ENDPOINT_TYPE is not set
-		pc.AuthEndpointType = string(interfaces.Remote)
+		//Default to "epinio" if AUTH_ENDPOINT_TYPE is not set
+		pc.AuthEndpointType = string(interfaces.Epinio)
 	} else {
 		val, endpointTypeSupported := interfaces.AuthEndpointTypes[pc.AuthEndpointType]
 		if endpointTypeSupported {
