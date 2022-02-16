@@ -66,7 +66,7 @@ func TestDoOauthFlowRequestWithValidToken(t *testing.T) {
 		var mockCNSI = interfaces.CNSIRecord{
 			GUID:                  mockCNSIGUID,
 			Name:                  "mockCF",
-			CNSIType:              "cf",
+			CNSIType:              "epinio",
 			APIEndpoint:           mockURL,
 			AuthorizationEndpoint: mockUAA.URL,
 			TokenEndpoint:         mockUAA.URL,
@@ -193,7 +193,7 @@ func TestDoOauthFlowRequestWithExpiredToken(t *testing.T) {
 		var mockCNSI = interfaces.CNSIRecord{
 			GUID:                  mockCNSIGUID,
 			Name:                  "mockCF",
-			CNSIType:              "cf",
+			CNSIType:              "epinio",
 			APIEndpoint:           mockURL,
 			AuthorizationEndpoint: mockUAA.URL,
 			TokenEndpoint:         mockUAA.URL,
@@ -336,7 +336,7 @@ func TestDoOauthFlowRequestWithFailedRefreshMethod(t *testing.T) {
 		var mockCNSI = interfaces.CNSIRecord{
 			GUID:                  mockCNSIGUID,
 			Name:                  "mockCF",
-			CNSIType:              "cf",
+			CNSIType:              "epinio",
 			APIEndpoint:           mockURL,
 			AuthorizationEndpoint: mockUAA.URL,
 			TokenEndpoint:         mockUAA.URL,
@@ -571,7 +571,7 @@ func TestRefreshTokenWithDatabaseErrorOnSave(t *testing.T) {
 		var mockCNSI = interfaces.CNSIRecord{
 			GUID:                  mockCNSIGUID,
 			Name:                  "mockCF",
-			CNSIType:              "cf",
+			CNSIType:              "epinio",
 			APIEndpoint:           mockURL,
 			AuthorizationEndpoint: mockUAA.URL,
 			TokenEndpoint:         mockUAA.URL,
