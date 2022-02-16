@@ -244,10 +244,7 @@ func (e *epinioAuth) generateLoginSuccessResponse(c echo.Context, userGUID, user
 		cookie := new(http.Cookie)
 		cookie.Name = "CSRF" // This matches Rancher's cookie name for the token
 		cookie.Value = c.Response().Header().Get(interfaces.XSRFTokenHeader)
-		// c.Response().Header().Set(interfaces.XSRFTokenHeader, token) // TODO: RC Neil - how clear?
-		// cookie.Expires = time.Now().Add(-24 * time.Hour) // TODO: RC Neil - needed?
 		cookie.Domain = e.p.SessionStoreOptions.Domain
-		// cookie.HttpOnly = e.p.SessionStoreOptions.HttpOnly // TODO: RC Neil - nuxt $cookies.get doesn't work with this in
 		cookie.Secure = e.p.SessionStoreOptions.Secure
 		cookie.Path = e.p.SessionStoreOptions.Path
 		cookie.MaxAge = 0

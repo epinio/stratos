@@ -72,9 +72,6 @@ func (epinio *Epinio) SessionEchoMiddleware(h echo.HandlerFunc) echo.HandlerFunc
 		if strings.HasPrefix(c.Request().URL.String(), "/pp/v1/proxy/") {
 			req := c.Request()
 
-			// TODO: RC Neil - Q - Rancher sends `x-api-csrf` which is stored in a cookie. Stratos expects `X-Xsrf-Token` which isn't stored in cookie
-			// Basically converting rancher's token to stratos here... then stratos to rancher cookie on log in
-
 			// Automatically assume all proxy requests are for the only epinio instance
 			// In the future, when other epinio instances and products are supported this
 			// will need to change
@@ -221,17 +218,45 @@ func (epinio *Epinio) Init() error {
 	skipSSLValidation := epinio.epinioApiUrlskipSSLValidation
 	fetchInfo := epinio.Info
 
-	// TODO: RC update if exists
 	if epinioCnsi, err := epinio.findEpinioEndpoint(); err == nil {
-		log.Infof("Skipping auto-registration of epinio endpoint %s (exists as \"%s\" - %s)", apiEndpoint, cnsiName, epinioCnsi.GUID)
-	} else {
-		epinioCnsi, err := epinio.portalProxy.DoRegisterEndpoint(cnsiName, apiEndpoint, skipSSLValidation, "", "", false, "", fetchInfo)
-		log.Infof("Auto-registering epinio endpoint %s as \"%s\" (%s)", apiEndpoint, cnsiName, epinioCnsi.GUID)
+		log.Infof("Found existing endpoint %s as \"%s\" (%s). Removing in case of updates", apiEndpoint, cnsiName, epinioCnsi.GUID)
 
+		cnsiRepo, err := epinio.portalProxy.GetStoreFactory().EndpointStore()
 		if err != nil {
-			log.Errorf("Could not auto-register Epinio endpoint: %v. %+v", err, epinioCnsi)
-			return nil
+			msg := "Unable to establish a cnsi database reference: '%v'"
+			log.Errorf(msg, err)
+			return fmt.Errorf(msg, err)
 		}
+
+		// Delete the endpoint
+		err = cnsiRepo.Delete(epinioCnsi.GUID)
+		if err != nil {
+			msg := "Unable to delete existing epinio record: %v"
+			log.Errorf(msg, err)
+			return fmt.Errorf(msg, err)
+		}
+
+		tokenRepo, err := epinio.portalProxy.GetStoreFactory().TokenStore()
+		if err != nil {
+			msg := "Unable to establish a token database reference: '%v'"
+			log.Errorf(msg, err)
+			return fmt.Errorf(msg, err)
+		}
+
+		err = tokenRepo.DeleteCNSITokens(epinioCnsi.GUID)
+		if err != nil {
+			msg := "Unable to delete epinio Tokens: %v"
+			log.Errorf(msg, err)
+			return fmt.Errorf(msg, err)
+		}
+	}
+
+	epinioCnsi, err := epinio.portalProxy.DoRegisterEndpoint(cnsiName, apiEndpoint, skipSSLValidation, "", "", false, "", fetchInfo)
+	log.Infof("Auto-registering epinio endpoint %s as \"%s\" (%s)", apiEndpoint, cnsiName, epinioCnsi.GUID)
+
+	if err != nil {
+		log.Errorf("Could not auto-register Epinio endpoint: %v. %+v", err, epinioCnsi)
+		return nil
 	}
 
 	return nil
