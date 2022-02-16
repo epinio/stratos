@@ -15,8 +15,8 @@ import (
 	"github.com/labstack/echo/v4"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces/config"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces/config"
 )
 
 const cfSessionCookieName = "JSESSIONID"
@@ -56,6 +56,10 @@ func handleSessionError(config interfaces.PortalConfig, c echo.Context, err erro
 
 	var logMessage = msg + ": %v"
 
+	// Send back JSON response and set the header
+	c.Response().Status = http.StatusUnauthorized
+	c.Response().Header().Set("X-Api-Cattle-Auth", "false") // TODO: RC Tech Debt
+
 	return interfaces.NewHTTPShadowError(
 		http.StatusUnauthorized,
 		msg, logMessage, err,
@@ -72,6 +76,11 @@ type (
 		Skipper Skipper
 	}
 )
+
+func (p *portalProxy) SessionMiddleware() echo.MiddlewareFunc {
+
+	return p.sessionMiddleware()
+}
 
 func (p *portalProxy) sessionMiddleware() echo.MiddlewareFunc {
 
@@ -160,7 +169,7 @@ func (p *portalProxy) xsrfMiddlewareWithConfig(config MiddlewareConfig) echo.Mid
 			token, err := p.GetSessionStringValue(c, XSRFTokenSessionName)
 			if err == nil {
 				// Check the token against the header
-				requestToken := c.Request().Header.Get(XSRFTokenHeader)
+				requestToken := c.Request().Header.Get(interfaces.XSRFTokenHeader)
 				if len(requestToken) > 0 {
 					if compareTokens(requestToken, token) {
 						return h(c)
@@ -220,6 +229,10 @@ func (p *portalProxy) setStaticCacheContentMiddleware(h echo.HandlerFunc) echo.H
 		c.Response().Header().Set("pragma", "no-cache")
 		return h(c)
 	}
+}
+
+func (p *portalProxy) SetSecureCacheContentMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
+	return p.setSecureCacheContentMiddleware(h)
 }
 
 func (p *portalProxy) setSecureCacheContentMiddleware(h echo.HandlerFunc) echo.HandlerFunc {

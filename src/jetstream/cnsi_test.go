@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 	_ "github.com/satori/go.uuid"
 	"gopkg.in/DATA-DOG/go-sqlmock.v1"
 )
@@ -33,10 +33,10 @@ func TestRegisterCFCluster(t *testing.T) {
 	defer db.Close()
 
 	mock.ExpectExec(insertIntoCNSIs).
-		WithArgs(sqlmock.AnyArg(), "Some fancy CF Cluster", "cf", mockV2Info.URL, mockAuthEndpoint, mockTokenEndpoint, mockDopplerEndpoint, true, mockClientId, sqlmock.AnyArg(), false, "", "").
+		WithArgs(sqlmock.AnyArg(), "Some fancy CF Cluster", "epinio", mockV2Info.URL, "", "", "", true, mockClientId, sqlmock.AnyArg(), false, "", "").
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	if err := pp.RegisterEndpoint(ctx, getCFPlugin(pp, "cf").Info); err != nil {
+	if err := pp.RegisterEndpoint(ctx, getCFPlugin(pp, "epinio").Info); err != nil {
 		t.Errorf("Failed to register cluster: %v", err)
 	}
 
@@ -64,7 +64,7 @@ func TestRegisterCFClusterWithMissingName(t *testing.T) {
 
 	defer db.Close()
 
-	if err := pp.RegisterEndpoint(ctx, getCFPlugin(pp, "cf").Info); err == nil {
+	if err := pp.RegisterEndpoint(ctx, getCFPlugin(pp, "epinio").Info); err == nil {
 		t.Error("Should not be able to register cluster without cluster name")
 	}
 }
@@ -104,7 +104,7 @@ func TestRegisterCFClusterWithMissingAPIEndpoint(t *testing.T) {
 
 	defer db.Close()
 
-	if err := pp.RegisterEndpoint(ctx, getCFPlugin(pp, "cf").Info); err == nil {
+	if err := pp.RegisterEndpoint(ctx, getCFPlugin(pp, "epinio").Info); err == nil {
 		t.Error("Should not be able to register cluster without api endpoint")
 	}
 }
@@ -131,7 +131,7 @@ func TestRegisterCFClusterWithInvalidAPIEndpoint(t *testing.T) {
 
 	defer db.Close()
 
-	if err := pp.RegisterEndpoint(ctx, getCFPlugin(pp, "cf").Info); err == nil {
+	if err := pp.RegisterEndpoint(ctx, getCFPlugin(pp, "epinio").Info); err == nil {
 		t.Error("Should not be able to register cluster without a valid api endpoint")
 	}
 }
@@ -156,7 +156,7 @@ func TestRegisterCFClusterWithBadV2Request(t *testing.T) {
 
 	defer db.Close()
 
-	if err := pp.RegisterEndpoint(ctx, getCFPlugin(pp, "cf").Info); err == nil {
+	if err := pp.RegisterEndpoint(ctx, getCFPlugin(pp, "epinio").Info); err == nil {
 		t.Error("Should not register cluster if call to v2/info fails")
 	}
 }
@@ -184,7 +184,7 @@ func TestRegisterCFClusterButCantSaveCNSIRecord(t *testing.T) {
 	mock.ExpectExec(insertIntoCNSIs).
 		WillReturnError(errors.New("Unknown Database Error"))
 
-	if err := pp.RegisterEndpoint(ctx, getCFPlugin(pp, "cf").Info); err == nil {
+	if err := pp.RegisterEndpoint(ctx, getCFPlugin(pp, "epinio").Info); err == nil {
 		t.Errorf("Unexpected success - should not be able to register cluster without token save.")
 	}
 }
@@ -231,26 +231,26 @@ func TestListCNSIsWhenListFails(t *testing.T) {
 	}
 }
 
-func TestGetCFv2InfoWithBadURL(t *testing.T) {
-	t.Parallel()
+// func TestGetCFv2InfoWithBadURL(t *testing.T) {
+// 	t.Parallel()
 
-	cfPlugin := initCFPlugin(&portalProxy{})
+// 	cfPlugin := initCFPlugin(&portalProxy{})
 
-	endpointPlugin, _ := cfPlugin.GetEndpointPlugin()
-	invalidEndpoint := "%zzzz"
-	if _, _, err := endpointPlugin.Info(invalidEndpoint, true); err == nil {
-		t.Error("getCFv2Info should not return a valid response when the URL is bad.")
-	}
-}
+// 	endpointPlugin, _ := cfPlugin.GetEndpointPlugin()
+// 	invalidEndpoint := "%zzzz"
+// 	if _, _, err := endpointPlugin.Info(invalidEndpoint, true); err == nil {
+// 		t.Error("getCFv2Info should not return a valid response when the URL is bad.")
+// 	}
+// }
 
-func TestGetCFv2InfoWithInvalidEndpoint(t *testing.T) {
-	t.Parallel()
+// func TestGetCFv2InfoWithInvalidEndpoint(t *testing.T) {
+// 	t.Parallel()
 
-	cfPlugin := initCFPlugin(&portalProxy{})
-	endpointPlugin, _ := cfPlugin.GetEndpointPlugin()
+// 	cfPlugin := initCFPlugin(&portalProxy{})
+// 	endpointPlugin, _ := cfPlugin.GetEndpointPlugin()
 
-	ep := "http://invalid.net"
-	if _, _, err := endpointPlugin.Info(ep, true); err == nil {
-		t.Error("getCFv2Info should not return a valid response when the endpoint is invalid.")
-	}
-}
+// 	ep := "http://invalid.net"
+// 	if _, _, err := endpointPlugin.Info(ep, true); err == nil {
+// 		t.Error("getCFv2Info should not return a valid response when the endpoint is invalid.")
+// 	}
+// }

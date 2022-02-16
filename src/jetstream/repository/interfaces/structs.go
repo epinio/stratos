@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"reflect"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces/config"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces/config"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
 )
@@ -157,6 +157,8 @@ type LoginRes struct {
 	User        *ConnectedUser `json:"user"`
 }
 
+
+
 type LocalLoginRes struct {
 	User *ConnectedUser `json:"user"`
 }
@@ -260,6 +262,8 @@ const (
 	Remote AuthEndpointType = "remote"
 	//Local - String representation of remote auth endpoint type
 	Local AuthEndpointType = "local"
+	// TODO: RC Tech Debt. Custom code in common area
+	Epinio AuthEndpointType = "epinio"
 	//AuthNone - String representation of no authentication
 	AuthNone AuthEndpointType = "none"
 )
@@ -269,6 +273,7 @@ const (
 var AuthEndpointTypes = map[string]AuthEndpointType{
 	"remote": Remote,
 	"local":  Local,
+	"epinio":  Epinio,
 	"none":   AuthNone,
 }
 
@@ -294,6 +299,11 @@ func (consoleConfig *ConsoleConfig) IsSetupComplete() bool {
 
 	// No auth, then setup is complete
 	if AuthEndpointTypes[consoleConfig.AuthEndpointType] == AuthNone {
+		return true
+	}
+
+	// Local user - check setup complete
+	if AuthEndpointTypes[consoleConfig.AuthEndpointType] == Epinio {
 		return true
 	}
 

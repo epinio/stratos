@@ -14,8 +14,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/crypto"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/crypto"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -346,6 +346,9 @@ func TestLoginToCNSI(t *testing.T) {
 		})
 
 		_, _, ctx, pp, db, mock := setupHTTPTest(req)
+		ctx.Set("rancher_username", "admin")
+		ctx.Set("rancher_password", "changeme")
+
 		defer db.Close()
 
 		mockUAA := setupMockServer(t,
@@ -358,11 +361,11 @@ func TestLoginToCNSI(t *testing.T) {
 
 		var mockURL *url.URL
 		mockURL, _ = url.Parse(mockUAA.URL)
-		stringCFType := "cf"
+		stringCFType := "epinio"
 		var mockCNSI = interfaces.CNSIRecord{
 			GUID:                   mockCNSIGUID,
 			Name:                   "mockCF",
-			CNSIType:               "cf",
+			CNSIType:               "epinio",
 			APIEndpoint:            mockURL,
 			AuthorizationEndpoint:  mockUAA.URL,
 			TokenEndpoint:          mockUAA.URL,
@@ -443,6 +446,8 @@ func TestLoginToCNSIWithMissingCNSIRecord(t *testing.T) {
 		})
 
 		_, _, ctx, pp, db, mock := setupHTTPTest(req)
+		ctx.Set("rancher_username", "admin")
+		ctx.Set("rancher_password", "changeme")
 		defer db.Close()
 
 		// Return nil from db call
@@ -474,6 +479,8 @@ func TestLoginToCNSIWithMissingCreds(t *testing.T) {
 			"cnsi_guid": mockCNSIGUID,
 		})
 		_, _, ctx, pp, db, mock := setupHTTPTest(req)
+		ctx.Set("rancher_username", "admin")
+		ctx.Set("rancher_password", "changeme")
 		defer db.Close()
 
 		mockUAA := setupMockServer(t,
@@ -485,7 +492,7 @@ func TestLoginToCNSIWithMissingCreds(t *testing.T) {
 		defer mockUAA.Close()
 
 		expectedCNSIRow := sqlmock.NewRows([]string{"guid", "name", "cnsi_type", "api_endpoint", "auth_endpoint", "token_endpoint", "doppler_logging_endpoint"}).
-			AddRow(mockCNSIGUID, "mockCF", "cf", mockUAA.URL, mockUAA.URL, mockUAA.URL, mockDopplerEndpoint)
+			AddRow(mockCNSIGUID, "mockCF", "epinio", mockUAA.URL, mockUAA.URL, mockUAA.URL, mockDopplerEndpoint)
 		mock.ExpectQuery(selectAnyFromCNSIs).
 			WithArgs(mockCNSIGUID).
 			WillReturnRows(expectedCNSIRow)
@@ -514,6 +521,8 @@ func TestLoginToCNSIWithBadUserIDinSession(t *testing.T) {
 		})
 
 		_, _, ctx, pp, db, mock := setupHTTPTest(req)
+		ctx.Set("rancher_username", "admin")
+		ctx.Set("rancher_password", "changeme")
 		defer db.Close()
 
 		mockUAA := setupMockServer(t,
@@ -526,11 +535,11 @@ func TestLoginToCNSIWithBadUserIDinSession(t *testing.T) {
 
 		var mockURL *url.URL
 		mockURL, _ = url.Parse(mockUAA.URL)
-		stringCFType := "cf"
+		stringCFType := "epinio"
 		var mockCNSI = interfaces.CNSIRecord{
 			GUID:                  mockCNSIGUID,
 			Name:                  "mockCF",
-			CNSIType:              "cf",
+			CNSIType:              "epinio",
 			APIEndpoint:           mockURL,
 			AuthorizationEndpoint: mockUAA.URL,
 			TokenEndpoint:         mockUAA.URL,
@@ -785,7 +794,7 @@ func TestVerifySession(t *testing.T) {
 
 		var expectedScopes = `"scopes":["openid","scim.read","cloud_controller.admin","uaa.user","cloud_controller.read","password.write","routing.router_groups.read","cloud_controller.write","doppler.firehose","scim.write"]`
 
-		var expectedBody = `{"status":"ok","error":"","data":{"version":{"proxy_version":"dev","database_version":20161117141922},"user":{"guid":"asd-gjfg-bob","name":"admin","admin":false,` + expectedScopes + `},"endpoints":{"cf":{}},"plugins":null,"config":{"enableTechPreview":false,"APIKeysEnabled":"admin_only","homeViewShowFavoritesOnly":false}}}`
+		var expectedBody = `{"status":"ok","error":"","data":{"version":{"proxy_version":"dev","database_version":20161117141922},"user":{"guid":"asd-gjfg-bob","name":"admin","admin":false,` + expectedScopes + `},"endpoints":{"epinio":{}},"plugins":null,"config":{"enableTechPreview":false,"APIKeysEnabled":"admin_only","homeViewShowFavoritesOnly":false}}}`
 
 		Convey("Should contain expected body", func() {
 			So(res, ShouldNotBeNil)

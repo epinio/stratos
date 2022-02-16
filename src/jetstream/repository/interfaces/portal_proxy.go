@@ -83,4 +83,7 @@ type PortalProxy interface {
 	// Store
 	GetStoreFactory() StoreFactory
 	SetStoreFactory(factory StoreFactory) StoreFactory
+
+	SetSecureCacheContentMiddleware(h echo.HandlerFunc) echo.HandlerFunc
+	SessionMiddleware() echo.MiddlewareFunc
 }

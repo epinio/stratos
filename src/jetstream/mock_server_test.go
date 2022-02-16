@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -16,12 +17,13 @@ import (
 	"github.com/labstack/echo/v4"
 	sqlmock "gopkg.in/DATA-DOG/go-sqlmock.v1"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/crypto"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/factory"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/tokens"
+	"github.com/epinio/ui-backend/src/jetstream/crypto"
+	"github.com/epinio/ui-backend/src/jetstream/factory"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/repository/tokens"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/plugins/cloudfoundry"
+	"github.com/epinio/ui-backend/src/jetstream/plugins/epinio"
+	log "github.com/sirupsen/logrus"
 )
 
 type mockServer struct {
@@ -124,7 +126,11 @@ func setupMockPGStore(db *sql.DB) *mockPGStore {
 }
 
 func initCFPlugin(pp *portalProxy) interfaces.StratosPlugin {
-	plugin, _ := cloudfoundry.Init(pp)
+	plugin, err := epinio.Init(pp)
+
+	if err != nil {
+		log.Errorf("Failed to initialize plugin: %+v", err)
+	}
 
 	return plugin
 }
@@ -145,14 +151,16 @@ func setupPortalProxy(db *sql.DB) *portalProxy {
 		SessionStoreSecret:   "hiddenraisinsohno!",
 		EncryptionKeyInBytes: mockEncryptionKey,
 		CFAdminIdentifier:    CFAdminIdentifier,
-		AuthEndpointType:     "remote",
+		AuthEndpointType:     "epinio",
 	}
+
+	os.Setenv("EPINIO_API_URL", "abc")
 
 	pp := newPortalProxy(pc, db, nil, nil, env.NewVarSet())
 	pp.SessionStore = setupMockPGStore(db)
 	initialisedEndpoint := initCFPlugin(pp)
 	pp.Plugins = make(map[string]interfaces.StratosPlugin)
-	pp.Plugins["cf"] = initialisedEndpoint
+	pp.Plugins["epinio"] = initialisedEndpoint
 
 	pp.SessionStoreOptions = new(sessions.Options)
 	pp.SessionStoreOptions.Domain = "example.org"
@@ -176,7 +184,7 @@ func expectOneRow() sqlmock.Rows {
 
 func expectCFRow() sqlmock.Rows {
 	return sqlmock.NewRows(rowFieldsForCNSI).
-		AddRow(mockCFGUID, "Some fancy CF Cluster", "cf", mockAPIEndpoint, mockAuthEndpoint, mockAuthEndpoint, mockDopplerEndpoint, true, mockClientId, cipherClientSecret, true, "", "")
+		AddRow(mockCFGUID, "Some fancy CF Cluster", "epinio", mockAPIEndpoint, mockAuthEndpoint, mockAuthEndpoint, mockDopplerEndpoint, true, mockClientId, cipherClientSecret, true, "", "")
 }
 
 func expectCERow() sqlmock.Rows {
@@ -186,7 +194,7 @@ func expectCERow() sqlmock.Rows {
 
 func expectCFAndCERows() sqlmock.Rows {
 	return sqlmock.NewRows(rowFieldsForCNSI).
-		AddRow(mockCFGUID, "Some fancy CF Cluster", "cf", mockAPIEndpoint, mockAuthEndpoint, mockAuthEndpoint, mockDopplerEndpoint, true, mockClientId, cipherClientSecret, false, "", "").
+		AddRow(mockCFGUID, "Some fancy CF Cluster", "epinio", mockAPIEndpoint, mockAuthEndpoint, mockAuthEndpoint, mockDopplerEndpoint, true, mockClientId, cipherClientSecret, false, "", "").
 		AddRow(mockCEGUID, "Some fancy HCE Cluster", "hce", mockAPIEndpoint, mockAuthEndpoint, mockAuthEndpoint, "", true, mockClientId, cipherClientSecret, false, "", "")
 }
 
@@ -284,7 +292,7 @@ const (
 	mockClientSecret    = "big_secret"
 	mockProxyVersion    = 20161117141922
 
-	stringCFType = "cf"
+	stringCFType = "epinio"
 
 	selectAnyFromTokens = `SELECT (.+) FROM tokens WHERE (.+)`
 	insertIntoTokens    = `INSERT INTO tokens`

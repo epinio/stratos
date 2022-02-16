@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/crypto"
-	"github.com/cloudfoundry-incubator/stratos/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/crypto"
+	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 	. "github.com/smartystreets/goconvey/convey"
 	sqlmock "gopkg.in/DATA-DOG/go-sqlmock.v1"
 )
@@ -66,7 +66,7 @@ func TestDoOauthFlowRequestWithValidToken(t *testing.T) {
 		var mockCNSI = interfaces.CNSIRecord{
 			GUID:                  mockCNSIGUID,
 			Name:                  "mockCF",
-			CNSIType:              "cf",
+			CNSIType:              "epinio",
 			APIEndpoint:           mockURL,
 			AuthorizationEndpoint: mockUAA.URL,
 			TokenEndpoint:         mockUAA.URL,
@@ -193,7 +193,7 @@ func TestDoOauthFlowRequestWithExpiredToken(t *testing.T) {
 		var mockCNSI = interfaces.CNSIRecord{
 			GUID:                  mockCNSIGUID,
 			Name:                  "mockCF",
-			CNSIType:              "cf",
+			CNSIType:              "epinio",
 			APIEndpoint:           mockURL,
 			AuthorizationEndpoint: mockUAA.URL,
 			TokenEndpoint:         mockUAA.URL,
@@ -336,7 +336,7 @@ func TestDoOauthFlowRequestWithFailedRefreshMethod(t *testing.T) {
 		var mockCNSI = interfaces.CNSIRecord{
 			GUID:                  mockCNSIGUID,
 			Name:                  "mockCF",
-			CNSIType:              "cf",
+			CNSIType:              "epinio",
 			APIEndpoint:           mockURL,
 			AuthorizationEndpoint: mockUAA.URL,
 			TokenEndpoint:         mockUAA.URL,
@@ -571,7 +571,7 @@ func TestRefreshTokenWithDatabaseErrorOnSave(t *testing.T) {
 		var mockCNSI = interfaces.CNSIRecord{
 			GUID:                  mockCNSIGUID,
 			Name:                  "mockCF",
-			CNSIType:              "cf",
+			CNSIType:              "epinio",
 			APIEndpoint:           mockURL,
 			AuthorizationEndpoint: mockUAA.URL,
 			TokenEndpoint:         mockUAA.URL,
