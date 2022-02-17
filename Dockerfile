@@ -1,8 +1,4 @@
-FROM alpine as certs
-RUN apk --update --no-cache add ca-certificates
-
-FROM scratch
-COPY --from=certs /etc/ssl/certs /etc/ssl/certs
+FROM registry.suse.com/bci/bci-micro
 
 # default, if running outside of gorelease with a self-compiled binary
 ARG DIST_BINARY=src/jetstream/jetstream
