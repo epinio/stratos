@@ -34,9 +34,6 @@ builds:
 changelog:
   skip: false
 
-env:
-  - CGO_ENABLED=0
-
 snapshot:
   name_template: "{{ .Tag }}-next"
 
