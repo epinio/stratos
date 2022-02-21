@@ -9,10 +9,6 @@ permissions:
   contents: write
   packages: write
 
-env:
-  # change this to embed a different UI dashboard
-  UI_BUNDLE_URL: https://releases.rancher.com/dashboard/epinio-dev/index.html
-
 jobs:
   release:
     runs-on: self-hosted
@@ -38,12 +34,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      -
-        name: Download dashboard
-        run: |
-          mkdir ui
-          cd ui
-          wget -r -nH --cut-dirs=2 "${{ env.UI_BUNDLE_URL }}"
       -
         name: Get current tag
         id: get_tag
