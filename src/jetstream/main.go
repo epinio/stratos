@@ -53,12 +53,12 @@ import (
 	"github.com/epinio/ui-backend/src/jetstream/repository/tokens"
 )
 
-// @title Stratos API
+// @title Epinio API
 // @version 1.0
-// @description Stratos backend API.
+// @description Epinio backend API.
 
-// @contact.name Stratos maintainers
-// @contact.url https://github.com/cloudfoundry/stratos/issues
+// @contact.name Epinio maintainers
+// @contact.url https://github.com/epinio/ui-backend/issues
 
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
