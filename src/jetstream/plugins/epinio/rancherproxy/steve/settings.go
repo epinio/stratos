@@ -30,7 +30,7 @@ func NewDefaultSettings(ec echo.Context) *interfaces.Collection {
 		epinioVersion = "unknown"
 	}
 
-	col.Data = make([]interface{}, 5)
+	col.Data = make([]interface{}, 3)
 	// Visible to all, regardless of auth
 	col.Data[0] = NewStringSettings(baseURL, "first-login", "false")
 	col.Data[1] = NewStringSettings(baseURL, "ui-pl", "Epinio")

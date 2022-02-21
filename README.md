@@ -18,7 +18,7 @@ npm run build-backend
 
 ```
 cd src/jetstream
-EPINIO_API_URL=<epinio API URL> EPINIO_API_SKIP_SSL=<true|false> ./jetstream
+EPINIO_API_URL=<epinio API URL> EPINIO_API_SKIP_SSL=<true|false> EPINIO_VERSION=dev ./jetstream
 ```
 
 ## Run Frontend
@@ -48,6 +48,8 @@ The following envs should be provided as env vars via helm.
 | `SESSION_STORE_SECRET` | Yes (only for prod) |
 | `UI_PATH` | No | `./ui` | path to UI files that are served up by Jetstream
 | `EPINIO_VERSION` | Yes | - | Should match the version of epinio that's installed (requires thought, this will be mislead when there are UI bugs)
+| `RANCHER_ENV` | No | - | Not needed for template/helm, though needed when running the ui locally
+
 
 ## Building Jetstream
 
