@@ -13,7 +13,7 @@ func SendResponse(ec echo.Context, obj interface{}) error {
 		return err
 	}
 
-	userID := ec.Get("user_id") // TODO: RC double check
+	userID := ec.Get("user_id")
 	isAuthenticated := userID != nil
 
 	ec.Response().Header().Set("X-Api-Cattle-Auth", fmt.Sprintf("%t", isAuthenticated))

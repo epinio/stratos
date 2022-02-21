@@ -2,10 +2,15 @@ package steve
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/labstack/echo/v4"
 
 	"github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/interfaces"
+)
+
+const (
+	epinioVersion = "EPINIO_VERSION"
 )
 
 func NewDefaultSettings(ec echo.Context) *interfaces.Collection {
@@ -20,10 +25,16 @@ func NewDefaultSettings(ec echo.Context) *interfaces.Collection {
 
 	baseURL := interfaces.GetSelfLink(ec)
 
-	col.Data = make([]interface{}, 2)
+	epinioVersion := os.Getenv(epinioVersion)
+	if epinioVersion == "" {
+		epinioVersion = "unknown"
+	}
+
+	col.Data = make([]interface{}, 5)
 	// Visible to all, regardless of auth
 	col.Data[0] = NewStringSettings(baseURL, "first-login", "false")
 	col.Data[1] = NewStringSettings(baseURL, "ui-pl", "Epinio")
+	col.Data[2] = NewStringSettings(baseURL, "server-version", epinioVersion)
 
 	return &col
 }
