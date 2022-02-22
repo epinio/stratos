@@ -72,6 +72,7 @@ dockers:
     - "--label=org.opencontainers.image.title={{.ProjectName}}"
     - "--label=org.opencontainers.image.revision={{.FullCommit}}"
     - "--label=org.opencontainers.image.version={{.Version}}"
+    - "--label=epinio.io.ui.source={{.Env.UI_BUNDLE_URL}}"
     - "--label=org.opencontainers.image.source=https://github.com/epinio/ui-backend"
     - "--build-arg=DIST_BINARY=epinio-ui"
     - "--platform=linux/amd64"

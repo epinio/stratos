@@ -9,6 +9,10 @@ permissions:
   contents: write
   packages: write
 
+env:
+  # change this to embed a different UI dashboard
+  UI_BUNDLE_URL: https://github.com/richard-cox/dashboard/releases/download/epinio-standalone-v0.3.6-0.0.1/rancher-dashboard-epinio-standalone-embed.tar.gz
+
 jobs:
   release:
     runs-on: self-hosted
@@ -34,6 +38,11 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Download dashboard
+        run: |
+          mkdir ui
+          tar xfz "${{ env.UI_BUNDLE_URL }}" -C ui
       -
         name: Get current tag
         id: get_tag
