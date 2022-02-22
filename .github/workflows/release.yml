@@ -42,7 +42,8 @@ jobs:
         name: Download dashboard
         run: |
           mkdir ui
-          tar xfz "${{ env.UI_BUNDLE_URL }}" -C ui
+          wget "${{ env.UI_BUNDLE_URL }}"
+          tar xfz *.tar.gz -C ui
       -
         name: Get current tag
         id: get_tag
