@@ -261,7 +261,7 @@ func (p *portalProxy) adminMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
 			}
 		}
 
-		return handleSessionError(p.Config, c, errors.New("Unauthorized"), false, "You must be a Stratos admin to access this API")
+		return handleSessionError(p.Config, c, errors.New("Unauthorized"), false, fmt.Sprintf("You must be a Stratos admin to access this API. URL: %s", c.Request().URL))
 	}
 }
 

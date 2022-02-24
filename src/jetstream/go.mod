@@ -33,6 +33,7 @@ require (
 	github.com/swaggo/swag v1.6.7
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
+	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 // indirect
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.5.0
 	gopkg.in/yaml.v2 v2.4.0

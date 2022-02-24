@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 
 	eInterfaces "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/interfaces"
 	normanProxy "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/norman"
@@ -20,6 +19,7 @@ import (
 
 const (
 	epinioApiUrlEnv                  = "EPINIO_API_URL"
+	epinioApiWsUrl                   = "EPINIO_API_WS_URL"
 	epinioApiUrlskipSSLValidationEnv = "EPINIO_API_SKIP_SSL"
 )
 
@@ -27,6 +27,7 @@ const (
 type Epinio struct {
 	portalProxy                   interfaces.PortalProxy
 	epinioApiUrl                  string
+	epinioApiWsUrl                string
 	epinioApiUrlskipSSLValidation bool
 }
 
@@ -45,6 +46,11 @@ func Init(portalProxy interfaces.PortalProxy) (interfaces.StratosPlugin, error) 
 		return nil, fmt.Errorf("Failed to find Epinio API url env `%s`", epinioApiUrlEnv)
 	}
 
+	epinioApiWsUrl := os.Getenv(epinioApiWsUrl)
+	if len(epinioApiWsUrl) == 0 {
+		return nil, fmt.Errorf("Failed to find Epinio WS API url env `%s`", epinioApiWsUrl)
+	}
+
 	epinioApiUrlskipSSLValidation, err := strconv.ParseBool(os.Getenv(epinioApiUrlskipSSLValidationEnv))
 	if err != nil {
 		epinioApiUrlskipSSLValidation = false
@@ -55,6 +61,7 @@ func Init(portalProxy interfaces.PortalProxy) (interfaces.StratosPlugin, error) 
 	return &Epinio{
 		portalProxy:                   portalProxy,
 		epinioApiUrl:                  epinioApiUrl,
+		epinioApiWsUrl:                epinioApiWsUrl,
 		epinioApiUrlskipSSLValidation: epinioApiUrlskipSSLValidation,
 	}, nil
 }
@@ -69,23 +76,6 @@ func (epinio *Epinio) EchoMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
 // MiddlewarePlugin interface
 func (epinio *Epinio) SessionEchoMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		if strings.HasPrefix(c.Request().URL.String(), "/pp/v1/proxy/") {
-			req := c.Request()
-
-			// Automatically assume all proxy requests are for the only epinio instance
-			// In the future, when other epinio instances and products are supported this
-			// will need to change
-			if epinioCnsi, err := epinio.findEpinioEndpoint(); err == nil {
-				req.Header.Set("x-cap-cnsi-list", epinioCnsi.GUID)
-				req.Header.Set("x-cap-passthrough", "true")
-
-				// Swap Rancher's cross-site request forgery token for Stratos's
-				req.Header.Set(interfaces.XSRFTokenHeader, req.Header.Get("x-api-csrf"))
-			} else {
-				log.Warn("Failed to find Epinio Endpoint to proxy to. This will probably cause many requests to fail")
-			}
-
-		}
 		return h(c)
 	}
 }
@@ -213,12 +203,20 @@ func (epinio *Epinio) Init() error {
 	// Add login hook to automatically register and connect to the Cloud Foundry when the user logs in
 	epinio.portalProxy.AddLoginHook(0, epinio.loginHook)
 
-	cnsiName := "epinio_default"
+	cnsiName := "default" // This must match EPINIO_STANDALONE_CLUSTER_ID in front end
 	apiEndpoint := epinio.epinioApiUrl
+	apiWsUrl := epinio.epinioApiWsUrl
 	skipSSLValidation := epinio.epinioApiUrlskipSSLValidation
 	fetchInfo := epinio.Info
 
 	if epinioCnsi, err := epinio.findEpinioEndpoint(); err == nil {
+
+		if epinioCnsi.APIEndpoint.String() == apiEndpoint && epinioCnsi.DopplerLoggingEndpoint == apiWsUrl {
+			// skip
+			log.Infof("Found existing endpoint %s as \"%s\" (%s) with the same API & WS API. Skipping auto-registration", apiEndpoint, cnsiName, epinioCnsi.GUID)
+			return nil
+		}
+
 		log.Infof("Found existing endpoint %s as \"%s\" (%s). Removing in case of updates", apiEndpoint, cnsiName, epinioCnsi.GUID)
 
 		cnsiRepo, err := epinio.portalProxy.GetStoreFactory().EndpointStore()
@@ -267,7 +265,8 @@ func (epinio *Epinio) Info(apiEndpoint string, skipSSLValidation bool) (interfac
 	v2InfoResponse := interfaces.V2Info{}
 
 	newCNSI := interfaces.CNSIRecord{
-		CNSIType: eInterfaces.EndpointType,
+		CNSIType:               eInterfaces.EndpointType,
+		DopplerLoggingEndpoint: epinio.epinioApiWsUrl,
 	}
 
 	return newCNSI, v2InfoResponse, nil

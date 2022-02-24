@@ -588,6 +588,7 @@ func loadPortalConfig(pc interfaces.PortalConfig, env *env.VarSet) (interfaces.P
 
 	// Add custom properties
 	pc.CFAdminIdentifier = CFAdminIdentifier
+	pc.HTTPS = true
 	pc.PluginConfig = make(map[string]string)
 
 	// Default to standard timeout if the mutating one is not configured
@@ -1072,10 +1073,10 @@ func (p *portalProxy) registerRoutes(e *echo.Echo, needSetupMiddleware bool) {
 	stableAPIGroup.GET("/tokens", p.ssoLoginToCNSI)
 
 	// CNSI operations
-	stableAPIGroup.GET("/endpoints", p.listCNSIs)
+	// stableAPIGroup.GET("/endpoints", p.listCNSIs) TODO: RC Q N
 
 	// Proxy single request
-	stableAPIGroup.GET("/proxy/:uuid/*", p.ProxySingleRequest)
+	// stableAPIGroup.GET("/proxy/:uuid/*", p.ProxySingleRequest) // TODO: RC Q N
 
 	sessionAuthGroup := sessionGroup.Group("/auth")
 
@@ -1094,8 +1095,15 @@ func (p *portalProxy) registerRoutes(e *echo.Echo, needSetupMiddleware bool) {
 		routePlugin.AddSessionGroupRoutes(sessionGroup)
 	}
 
+	sessionGroup.GET("/endpoints", p.listCNSIs)
+
+	direct := sessionGroup.Group("/direct")
+	// direct.GET("/ws/:uuid/*", p.ProxyWebSocketRequest3)
+	direct.Any("/r/:uuid/*", p.ProxySingleRequest)
+
 	// This is used for passthru of requests
 	group := sessionGroup.Group("/proxy")
+	// Proxy single socket request
 	group.Any("/*", p.proxy)
 
 	// The admin-only routes need to be last as the admin middleware will be
