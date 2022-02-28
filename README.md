@@ -49,6 +49,7 @@ The following envs should be provided as env vars via helm.
 | `UI_PATH` | No | `./ui` | path to UI files that are served up by Jetstream
 | `EPINIO_VERSION` | Yes | - | Should match the version of epinio that's installed (requires thought, this will be mislead when there are UI bugs)
 | `RANCHER_ENV` | No | - | Not needed for template/helm, though needed when running the ui locally
+| `SESSION_STORE_EXPIRY` | Yes | 20 | This should be bumped up in the standalone world, recommend 24 hours, so `1440`
 
 
 ## Building Jetstream
