@@ -1098,7 +1098,7 @@ func (p *portalProxy) registerRoutes(e *echo.Echo, needSetupMiddleware bool) {
 	sessionGroup.GET("/endpoints", p.listCNSIs)
 
 	direct := sessionGroup.Group("/direct")
-	// direct.GET("/ws/:uuid/*", p.ProxyWebSocketRequest3)
+	direct.Any("/ws/:uuid/*", p.ProxyWebSocketRequest3)
 	direct.Any("/r/:uuid/*", p.ProxySingleRequest)
 
 	// This is used for passthru of requests
