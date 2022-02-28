@@ -76,6 +76,12 @@ func (epinio *Epinio) EchoMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
 // MiddlewarePlugin interface
 func (epinio *Epinio) SessionEchoMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		req := c.Request()
+		if req.Header.Get("x-api-csrf") != "" {
+			// Swap Rancher's cross-site request forgery token for Stratos's
+			log.Debugf("Swapping %+v for %+v", req.Header.Get("x-api-csrf"), interfaces.XSRFTokenHeader)
+			req.Header.Set(interfaces.XSRFTokenHeader, req.Header.Get("x-api-csrf"))
+		}
 		return h(c)
 	}
 }
