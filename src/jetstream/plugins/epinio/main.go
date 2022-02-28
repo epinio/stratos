@@ -41,14 +41,14 @@ func Init(portalProxy interfaces.PortalProxy) (interfaces.StratosPlugin, error) 
 		return nil, fmt.Errorf("Epinio plugin requires auth endpoint type of %s", interfaces.Epinio)
 	}
 
-	epinioApiUrl := os.Getenv(epinioApiUrlEnv)
-	if len(epinioApiUrl) == 0 {
+	epinioApiUrlValue := os.Getenv(epinioApiUrlEnv)
+	if len(epinioApiUrlValue) == 0 {
 		return nil, fmt.Errorf("Failed to find Epinio API url env `%s`", epinioApiUrlEnv)
 	}
 
-	epinioApiWsUrl := os.Getenv(epinioApiWsUrl)
-	if len(epinioApiWsUrl) == 0 {
-		return nil, fmt.Errorf("Failed to find Epinio WS API url env `%s`", epinioApiWsUrl)
+	epinioApiWsUrlValue := os.Getenv(epinioApiWsUrl)
+	if len(epinioApiWsUrlValue) == 0 {
+		log.Warnf("Failed to find Epinio WS API url env `%s`", epinioApiWsUrl)
 	}
 
 	epinioApiUrlskipSSLValidation, err := strconv.ParseBool(os.Getenv(epinioApiUrlskipSSLValidationEnv))
@@ -56,12 +56,12 @@ func Init(portalProxy interfaces.PortalProxy) (interfaces.StratosPlugin, error) 
 		epinioApiUrlskipSSLValidation = false
 	}
 
-	log.Infof("Epinio API url: %s. Skipping SSL Validation: %+v", epinioApiUrl, epinioApiUrlskipSSLValidation)
+	log.Infof("Epinio API url: %s. Skipping SSL Validation: %+v", epinioApiUrlValue, epinioApiUrlskipSSLValidation)
 
 	return &Epinio{
 		portalProxy:                   portalProxy,
-		epinioApiUrl:                  epinioApiUrl,
-		epinioApiWsUrl:                epinioApiWsUrl,
+		epinioApiUrl:                  epinioApiUrlValue,
+		epinioApiWsUrl:                epinioApiWsUrlValue,
 		epinioApiUrlskipSSLValidation: epinioApiUrlskipSSLValidation,
 	}, nil
 }
