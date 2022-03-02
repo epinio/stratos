@@ -32,11 +32,6 @@ pushd "${STRATOS}/src/jetstream" > /dev/null
 # Show go env
 go env
 
-# Need to install swag in both cases
-echo "Generating OpenAPI documentation..."
-go get github.com/swaggo/swag/cmd/swag@v1.6.7
-swag init
-
 if [ "${ACTION}" == "build" ]; then
   echo "Building backend ..."
   echo "Building version: ${VERSION}"

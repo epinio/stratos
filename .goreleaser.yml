@@ -13,7 +13,6 @@ archives:
 before:
   hooks:
     - sh -c "cd src/jetstream && go mod download"
-    - sh -c "cd src/jetstream && go get github.com/swaggo/swag/cmd/swag@v1.6.7 && swag init"
 
 builds:
   - id: epinio-ui

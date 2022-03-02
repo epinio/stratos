@@ -80,7 +80,11 @@ func (p *PgsqlAPIKeysRepository) AddAPIKey(userID string, comment string) (*inte
 		return nil, err
 	}
 
-	keyGUID := uuid.NewV4().String()
+	keyUUID, err := uuid.NewV4()
+	if err != nil {
+		return nil, err
+	}
+	keyGUID := keyUUID.String()
 	keySecret := base64.URLEncoding.EncodeToString(randomBytes)
 
 	err = execQuery(p, sqlQueries.InsertAPIKey, keyGUID, keySecret, userID, comment)

@@ -25,20 +25,17 @@ import (
 	"time"
 
 	"github.com/epinio/ui-backend/src/jetstream/custombinder"
-	_ "github.com/epinio/ui-backend/src/jetstream/docs"
 
 	"bitbucket.org/liamstask/goose/lib/goose"
 	"github.com/antonlindstrom/pgstore"
 	"github.com/cf-stratos/mysqlstore"
-	cfenv "github.com/cloudfoundry-community/go-cfenv"
+	"github.com/epinio/ui-backend/src/jetstream/cf-common/env"
 	"github.com/gorilla/sessions"
-	"github.com/govau/cf-common/env"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/nwmac/sqlitestore"
 	uuid "github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
-	echoSwagger "github.com/swaggo/echo-swagger"
 
 	"github.com/epinio/ui-backend/src/jetstream/crypto"
 	"github.com/epinio/ui-backend/src/jetstream/datastore"
@@ -105,12 +102,6 @@ func getEnvironmentLookup() *env.VarSet {
 
 	// Environment variables
 	envLookup.AppendSource(os.LookupEnv)
-
-	// If running in CloudFoundry, fallback to a user provided service (if set)
-	cfApp, err := cfenv.Current()
-	if err == nil {
-		envLookup.AppendSource(env.NewLookupFromUPS(cfApp, os.Getenv("CF_UPS_NAME")))
-	}
 
 	// Fallback to a "config.properties" files in our directory
 	envLookup.AppendSource(config.NewConfigFileLookup("./config.properties"))
@@ -230,7 +221,12 @@ func main() {
 		// We should not be using the default value - this indicates that it has not been set by the user
 		// So for saftey, set a random value
 		log.Warn("When running in production, ensure you set SESSION_STORE_SECRET to a secure value")
-		portalConfig.SessionStoreSecret = uuid.NewV4().String()
+		sessionUUID, err := uuid.NewV4()
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		portalConfig.SessionStoreSecret = sessionUUID.String()
 	}
 
 	// Config plugins get to determine if we should run migrations on this instance
@@ -979,8 +975,6 @@ func (p *portalProxy) pluginRegisterRouter(c echo.Context) error {
 
 func (p *portalProxy) registerRoutes(e *echo.Echo, needSetupMiddleware bool) {
 	log.Debug("registerRoutes")
-
-	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	for _, plugin := range p.Plugins {
 		middlewarePlugin, err := plugin.GetMiddlewarePlugin()

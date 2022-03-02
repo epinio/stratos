@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/govau/cf-common/env"
+	"github.com/epinio/ui-backend/src/jetstream/cf-common/env"
 	"github.com/labstack/echo/v4"
 	uuid "github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
@@ -320,7 +320,11 @@ func setupInitialiseLocalUsersConfiguration(consoleConfig *interfaces.ConsoleCon
 		return err
 	}
 
-	userGUID := uuid.NewV4().String()
+	userUUID, err := uuid.NewV4()
+	if err != nil {
+		return err
+	}
+	userGUID := userUUID.String()
 	password := consoleConfig.LocalUserPassword
 	passwordHash, err := crypto.HashPassword(password)
 	if err != nil {

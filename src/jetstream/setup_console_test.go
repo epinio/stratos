@@ -6,7 +6,7 @@ import (
 	"github.com/epinio/ui-backend/src/jetstream/datastore"
 	"github.com/epinio/ui-backend/src/jetstream/repository/console_config"
 
-	"github.com/govau/cf-common/env"
+	"github.com/epinio/ui-backend/src/jetstream/cf-common/env"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
