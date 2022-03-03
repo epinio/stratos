@@ -584,7 +584,6 @@ func loadPortalConfig(pc interfaces.PortalConfig, env *env.VarSet) (interfaces.P
 
 	// Add custom properties
 	pc.CFAdminIdentifier = CFAdminIdentifier
-	pc.HTTPS = true
 	pc.PluginConfig = make(map[string]string)
 
 	// Default to standard timeout if the mutating one is not configured

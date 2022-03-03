@@ -157,8 +157,6 @@ type LoginRes struct {
 	User        *ConnectedUser `json:"user"`
 }
 
-
-
 type LocalLoginRes struct {
 	User *ConnectedUser `json:"user"`
 }
@@ -273,7 +271,7 @@ const (
 var AuthEndpointTypes = map[string]AuthEndpointType{
 	"remote": Remote,
 	"local":  Local,
-	"epinio":  Epinio,
+	"epinio": Epinio,
 	"none":   AuthNone,
 }
 
@@ -391,7 +389,7 @@ type PortalConfig struct {
 	UIListAllowLoadMaxed               bool     `configName:"UI_LIST_ALLOW_LOAD_MAXED"`
 	CFAdminIdentifier                  string
 	CloudFoundryInfo                   *CFInfo
-	HTTPS                              bool
+	HTTPS                              bool `configName:"HTTPS"`
 	EncryptionKeyInBytes               []byte
 	ConsoleVersion                     string
 	IsCloudFoundry                     bool
