@@ -1098,7 +1098,7 @@ func (p *portalProxy) registerRoutes(e *echo.Echo, needSetupMiddleware bool) {
 	sessionGroup.GET("/endpoints", p.listCNSIs)
 
 	direct := sessionGroup.Group("/direct")
-	direct.Any("/ws/:uuid/*", p.ProxyWebSocketRequest3)
+	direct.Any("/ws/:uuid/*", p.ProxyWebSocketRequest)
 	direct.Any("/r/:uuid/*", p.ProxySingleRequest)
 
 	// This is used for passthru of requests
@@ -1147,7 +1147,7 @@ func (p *portalProxy) registerRoutes(e *echo.Echo, needSetupMiddleware bool) {
 		e.HTTPErrorHandler = getUICustomHTTPErrorHandler(staticDir, e.DefaultHTTPErrorHandler)
 		log.Info("Serving static UI resources")
 	} else {
-		// Not serving UI - use V2 Error compatability error handler
+		// Not serving UI - use V2 Error compatibility error handler
 		e.HTTPErrorHandler = echoV2DefaultHTTPErrorHandler
 	}
 }
