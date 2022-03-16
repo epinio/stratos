@@ -62,7 +62,7 @@ This will create a `jetstream` binary in `src/jetstream
 
 ## Running Jetstream
 ```
-EPINIO_API_URL=<epinio api> EPINIO_API_SKIP_SSL=true SESSION_STORE_EXPIRY=1440 AUTH_ENDPOINT_TYPE=epinio HTTPS=true ./jetstream
+EPINIO_API_URL=<epinio api url> EPINIO_API_WS_URL=<epinio ws api> EPINIO_API_SKIP_SSL=true SESSION_STORE_EXPIRY=1440 AUTH_ENDPOINT_TYPE=epinio HTTPS=true ./jetstream
 ```
 
 ## Fetching UI
