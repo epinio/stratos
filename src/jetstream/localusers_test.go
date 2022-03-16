@@ -1,20 +1,18 @@
 package main
 
 import (
-
 	"fmt"
 	"testing"
 	"time"
 
-	sqlmock "gopkg.in/DATA-DOG/go-sqlmock.v1"
 	uuid "github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
+	sqlmock "gopkg.in/DATA-DOG/go-sqlmock.v1"
 
 	"github.com/epinio/ui-backend/src/jetstream/crypto"
-	"github.com/epinio/ui-backend/src/jetstream/repository/localusers"
 	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
+	"github.com/epinio/ui-backend/src/jetstream/repository/localusers"
 	. "github.com/smartystreets/goconvey/convey"
-
 )
 
 const (
@@ -38,7 +36,7 @@ func TestAddLocalUser(t *testing.T) {
 		guid, err := pp.AddLocalUser(ctx)
 
 		expectedGUIDRow := sqlmock.NewRows([]string{"user_guid"}).AddRow(guid)
-        mock.ExpectQuery(findUserGUID).WillReturnRows(expectedGUIDRow)
+		mock.ExpectQuery(findUserGUID).WillReturnRows(expectedGUIDRow)
 		fetchedGUID, err := pp.FindUserGUID(ctx)
 
 		Convey("Should not fail to login", func() {
@@ -165,14 +163,15 @@ func TestFindPasswordHash(t *testing.T) {
 
 		username := "testuser"
 		password := "changeme"
-		email    := "test.person@somedomain.com"
-		scope    := "stratos.admin"
+		email := "test.person@somedomain.com"
+		scope := "stratos.admin"
 
 		//Hash the password
 		generatedPasswordHash, _ := crypto.HashPassword(password)
 
 		//generate a user GUID
-		userGUID := uuid.NewV4().String()
+		userUUID, _ := uuid.NewV4()
+		userGUID := userUUID.String()
 
 		mock.ExpectExec(addLocalUser).WillReturnResult(sqlmock.NewResult(1, 1))
 		user := interfaces.LocalUser{UserGUID: userGUID, PasswordHash: generatedPasswordHash, Username: username, Email: email, Scope: scope}
@@ -210,14 +209,15 @@ func TestUpdateLastLoginTime(t *testing.T) {
 
 		username := "testuser"
 		password := "changeme"
-		email    := "test.person@somedomain.com"
-		scope    := "stratos.admin"
+		email := "test.person@somedomain.com"
+		scope := "stratos.admin"
 
 		//Hash the password
 		generatedPasswordHash, _ := crypto.HashPassword(password)
 
 		//generate a user GUID
-		userGUID := uuid.NewV4().String()
+		userUUID, _ := uuid.NewV4()
+		userGUID := userUUID.String()
 
 		mock.ExpectExec(addLocalUser).WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -227,7 +227,7 @@ func TestUpdateLastLoginTime(t *testing.T) {
 		//Now generate and update the login time
 		generatedLoginTime := time.Now()
 
-		mock.ExpectExec(updateLastLoginTime).WillReturnResult(sqlmock.NewResult(1,1))
+		mock.ExpectExec(updateLastLoginTime).WillReturnResult(sqlmock.NewResult(1, 1))
 		localUsersRepo.UpdateLastLoginTime(userGUID, generatedLoginTime)
 
 		expectedLastLoginTimeRow := sqlmock.NewRows([]string{"login_time"}).AddRow(generatedLoginTime)

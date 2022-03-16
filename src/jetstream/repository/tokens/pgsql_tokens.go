@@ -138,7 +138,11 @@ func (p *PgsqlTokenRepository) SaveAuthToken(userGUID string, tr interfaces.Toke
 	case 0:
 
 		log.Debug("Performing INSERT of encrypted tokens")
-		tokenGUID := uuid.NewV4().String()
+		tokenUUID, err := uuid.NewV4()
+		if err != nil {
+			return err
+		}
+		tokenGUID := tokenUUID.String()
 		if _, err := p.db.Exec(insertAuthToken, tokenGUID, userGUID, "uaa", ciphertextAuthToken,
 			ciphertextRefreshToken, tr.TokenExpiry); err != nil {
 			msg := "Unable to INSERT UAA token: %v"
@@ -280,7 +284,11 @@ func (p *PgsqlTokenRepository) SaveCNSIToken(cnsiGUID string, userGUID string, t
 
 	switch count {
 	case 0:
-		tokenGUID := uuid.NewV4().String()
+		tokenUUID, err := uuid.NewV4()
+		if err != nil {
+			return err
+		}
+		tokenGUID := tokenUUID.String()
 		if _, insertErr := p.db.Exec(insertCNSIToken, tokenGUID, cnsiGUID, userGUID, "cnsi", ciphertextAuthToken,
 			ciphertextRefreshToken, tr.TokenExpiry, tr.Disconnected, tr.AuthType, tr.Metadata, linkedToken); insertErr != nil {
 

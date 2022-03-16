@@ -101,10 +101,10 @@ func (a *epinioAuth) GetUser(userGUID string) (*interfaces.ConnectedUser, error)
 
 func (a *epinioAuth) BeforeVerifySession(c echo.Context) {}
 
-//VerifySession verifies the session the specified local user, currently just verifies user exists
 func (a *epinioAuth) VerifySession(c echo.Context, sessionUser string, sessionExpireTime int64) error {
-	// TODO: RC Tech Debt - check for user's cnsi token
-	return errors.New("Not implemented")
+	// Never expires
+	// Only really used by `/v1/auth/verify`
+	return nil
 }
 
 //epinioLogin verifies local user credentials against our DB

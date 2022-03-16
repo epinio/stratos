@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/epinio/ui-backend/src/jetstream/cf-common/env"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
-	"github.com/govau/cf-common/env"
 	"github.com/labstack/echo/v4"
 	sqlmock "gopkg.in/DATA-DOG/go-sqlmock.v1"
 

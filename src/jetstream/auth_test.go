@@ -85,7 +85,8 @@ func TestLocalLogin(t *testing.T) {
 		passwordHash, _ := crypto.HashPassword(password)
 
 		//generate a user GUID
-		userGUID := uuid.NewV4().String()
+		userUUID, _ := uuid.NewV4()
+		userGUID := userUUID.String()
 
 		req := setupMockReq("POST", "", map[string]string{
 			"username": username,
@@ -142,7 +143,8 @@ func TestLocalLoginWithBadCredentials(t *testing.T) {
 		passwordHash, _ := crypto.HashPassword(password)
 
 		//generate a user GUID
-		userGUID := uuid.NewV4().String()
+		userUUID, _ := uuid.NewV4()
+		userGUID := userUUID.String()
 
 		req := setupMockReq("POST", "", map[string]string{
 			"username": username,
@@ -192,7 +194,8 @@ func TestLocalLoginWithNoAdminScope(t *testing.T) {
 		passwordHash, _ := crypto.HashPassword(password)
 
 		//generate a user GUID
-		userGUID := uuid.NewV4().String()
+		userUUID, _ := uuid.NewV4()
+		userGUID := userUUID.String()
 
 		wrongScope := "not admin scope"
 		req := setupMockReq("POST", "", map[string]string{

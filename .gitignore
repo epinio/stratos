@@ -54,7 +54,6 @@ environment.dev.ts
 
 #v1
 *.iml
-docs/src
 tools/test-backend/config/mock.config.json
 tools/.coverage-karma/
 dev-certs/*
@@ -100,9 +99,6 @@ src/jetstream/plugins/monocular/chart-repo/chartrepo
 src/jetstream/plugins/analysis/container/analyzers
 src/jetstream/.helm-cache
 src/jetstream/coverage.txt
-
-# Automatically generated OpenAPI docs
-src/jetstream/docs/
 
 # Backend file generated to include extra plugins
 src/jetstream/extra_plugins.go
