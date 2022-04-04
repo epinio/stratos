@@ -13,7 +13,7 @@ import (
 )
 
 func (p *portalProxy) ProxyWebSocketRequest(c echo.Context) error {
-	cnsiUri, err := p.createUrl(c)
+	cnsiUri, skipSllValidation, err := p.createUrl(c)
 	if err != nil {
 		return errors.Wrap(err, "error creating CNSI url")
 	}
@@ -24,7 +24,7 @@ func (p *portalProxy) ProxyWebSocketRequest(c echo.Context) error {
 		return errors.Wrap(err, "error upgrading incoming connection")
 	}
 
-	websocket.DefaultDialer.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	websocket.DefaultDialer.TLSClientConfig = &tls.Config{InsecureSkipVerify: skipSllValidation}
 	epinioWebSocketConn, _, err := websocket.DefaultDialer.Dial(cnsiUri.String(), http.Header{})
 	if err != nil {
 		return errors.Wrap(err, "error opening websocket connection to Epinio")
@@ -73,7 +73,7 @@ func (p *portalProxy) ProxyWebSocketRequest(c echo.Context) error {
 	return <-errChan
 }
 
-func (p *portalProxy) createUrl(c echo.Context) (*url.URL, error) {
+func (p *portalProxy) createUrl(c echo.Context) (*url.URL, bool, error) {
 	var err error
 	uri := url.URL{}
 
@@ -83,19 +83,19 @@ func (p *portalProxy) createUrl(c echo.Context) (*url.URL, error) {
 	uri.RawPath = c.Param("*")
 	uri.Path, err = url.PathUnescape(uri.RawPath)
 	if err != nil {
-		return nil, errors.Wrap(err, "error unescaping path")
+		return nil, false, errors.Wrap(err, "error unescaping path")
 	}
 
 	uri.RawQuery = c.Request().URL.RawQuery
 
 	cnsiRec, err := p.GetCNSIRecord(cnsi) // TODO: RC AUTH - user should be connected in order to use?
 	if err != nil {
-		return nil, errors.Wrap(err, "error getting CNSI record")
+		return nil, false, errors.Wrap(err, "error getting CNSI record")
 	}
 
 	cnsiUri, _ := url.Parse(cnsiRec.DopplerLoggingEndpoint)
 	if err != nil {
-		return nil, errors.Wrap(err, "error parsing Doppler logging endpoint")
+		return nil, false, errors.Wrap(err, "error parsing Doppler logging endpoint")
 	}
 
 	// The APIEndpoint might have a path already - so join the request URI to it...
@@ -109,8 +109,8 @@ func (p *portalProxy) createUrl(c echo.Context) (*url.URL, error) {
 
 	cnsiUri.Path, err = url.PathUnescape(uri.RawPath)
 	if err != nil {
-		return nil, errors.Wrap(err, "error unescaping path again")
+		return nil, false, errors.Wrap(err, "error unescaping path again")
 	}
 
-	return cnsiUri, nil
+	return cnsiUri, cnsiRec.SkipSSLValidation, nil
 }

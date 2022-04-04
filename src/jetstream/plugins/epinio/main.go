@@ -56,7 +56,7 @@ func Init(portalProxy interfaces.PortalProxy) (interfaces.StratosPlugin, error) 
 		epinioApiUrlskipSSLValidation = false
 	}
 
-	log.Infof("Epinio API url: %s. Skipping SSL Validation: %+v", epinioApiUrlValue, epinioApiUrlskipSSLValidation)
+	log.Infof("Epinio API url: '%s'. Epinio WSS url: '%s'. Skipping SSL Validation: '%+v'", epinioApiUrlValue, epinioApiWsUrlValue, epinioApiUrlskipSSLValidation)
 
 	return &Epinio{
 		portalProxy:                   portalProxy,
