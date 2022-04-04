@@ -22,7 +22,7 @@ EPINIO_API_URL=<epinio API URL> EPINIO_API_SKIP_SSL=<true|false> EPINIO_VERSION=
 ```
 
 ## Run Frontend
-In `rancher/dashboard` repo
+In `rancher/dashboard` repo, `epinio-standalone-dev` branch
 
 ```
 git checkout epinio-standalone-dev
@@ -31,6 +31,8 @@ API=https://localhost:5443 RANCHER_ENV=epinio yarn mem-dev --spa
 ```
 
 > Note - The `API` value points at the backend which defaults to port 5443
+
+> Note - If switching between `RANCHER_ENV`s you will need to `yarn clean`
 
 # Template / Helm
 
