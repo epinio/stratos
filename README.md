@@ -44,6 +44,7 @@ The following envs should be provided as env vars via helm.
 |-----|-----|---|--|
 | `AUTH_ENDPOINT_TYPE` | Yes | - | Should be `epinio`
 | `EPINIO_API_URL` | Yes | - | API URL of epinio instance
+| `EPINIO_WSS_URL` | Yes | - | WS API URL of epinio instance
 | `EPINIO_API_SKIP_SSL`| No (only for dev) | `false` | Skip checking for valid SSL cert when making requests to `EPINIO_API_URL`
 | `CONSOLE_PROXY_CERT_PATH` | Yes | - | Certificates value
 | `CONSOLE_PROXY_CERT_KEY_PATH` | Yes | - | Certificates value
@@ -64,7 +65,7 @@ This will create a `jetstream` binary in `src/jetstream
 
 ## Running Jetstream
 ```
-EPINIO_API_URL=<epinio api url> EPINIO_API_WS_URL=<epinio ws api> EPINIO_API_SKIP_SSL=true SESSION_STORE_EXPIRY=1440 AUTH_ENDPOINT_TYPE=epinio HTTPS=true ./jetstream
+EPINIO_API_URL=<epinio api url> EPINIO_WSS_URL=<epinio ws api> EPINIO_API_SKIP_SSL=true SESSION_STORE_EXPIRY=1440 AUTH_ENDPOINT_TYPE=epinio HTTPS=true ./jetstream
 ```
 
 ## Fetching UI

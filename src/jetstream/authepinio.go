@@ -190,7 +190,7 @@ func (a *epinioAuth) verifyEpinioCreds(username, password string) error {
 	var h = a.p.GetHttpClientForRequest(req, epinioEndpoint.SkipSSLValidation)
 	res, err := h.Do(req)
 	if err != nil || res.StatusCode != http.StatusOK {
-		log.Errorf("Error performing verify epinio creds - response: %v, error: %v", res, err)
+		log.Errorf("Error verify epinio creds - response: %v, error: %v", res, err)
 		return interfaces.LogHTTPError(res, err)
 	}
 

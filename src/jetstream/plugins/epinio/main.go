@@ -19,7 +19,7 @@ import (
 
 const (
 	epinioApiUrlEnv                  = "EPINIO_API_URL"
-	epinioApiWsUrl                   = "EPINIO_API_WS_URL"
+	epinioApiWsUrl                   = "EPINIO_WSS_URL"
 	epinioApiUrlskipSSLValidationEnv = "EPINIO_API_SKIP_SSL"
 )
 
