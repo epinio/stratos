@@ -11,7 +11,7 @@ permissions:
 
 env:
   # change this to embed a different UI dashboard
-  UI_BUNDLE_URL: https://github.com/rancher/dashboard/releases/download/epinio-standalone-v0.6.2-0.0.1/rancher-dashboard-epinio-standalone-embed.tar.gz
+  UI_BUNDLE_URL: https://github.com/rancher/dashboard/releases/download/epinio-standalone-v0.7.1-0.0.2/rancher-dashboard-epinio-standalone-embed.tar.gz
 
 jobs:
   release:
