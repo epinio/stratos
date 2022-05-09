@@ -3,6 +3,7 @@
 # Development
 
 ## Build Backend
+In this repo, `main` branch
 
 When running locally execute `npm install`
 > Note - This doesn't do anything except runs a few things `postinstall`, the most import is a rejig of config files.. which is just `./build/dev-setup.js`
@@ -22,17 +23,19 @@ EPINIO_API_URL=<epinio API URL> EPINIO_API_SKIP_SSL=<true|false> EPINIO_VERSION=
 ```
 
 ## Run Frontend
-In `rancher/dashboard` repo, `epinio-standalone-dev` branch
+In `rancher/dashboard` repo, `epinio-dev` branch
 
 ```
-git checkout epinio-standalone-dev
+git checkout epinio-dev
 yarn install
 API=https://localhost:5443 RANCHER_ENV=epinio yarn mem-dev --spa
 ```
 
-> Note - The `API` value points at the backend which defaults to port 5443
-
 > Note - If switching between `RANCHER_ENV`s you will need to `yarn clean`
+
+> Note - The `API` value points at the backend which defaults to port `5443`
+
+
 
 # Template / Helm
 
@@ -61,7 +64,7 @@ The following envs should be provided as env vars via helm.
 ./build/bk-build.sh
 ```
 
-This will create a `jetstream` binary in `src/jetstream
+This will create a `jetstream` binary in `src/jetstream`
 
 ## Running Jetstream
 ```
