@@ -2,78 +2,49 @@ package main
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net/http"
 	"net/url"
 	"path"
+	"time"
 
-	"github.com/gorilla/websocket"
+	"net/http/httputil"
+
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 func (p *portalProxy) ProxyWebSocketRequest(c echo.Context) error {
-	cnsiUri, skipSllValidation, err := p.createUrl(c)
+	cnsiURL, skipSllValidation, err := p.createURL(c)
 	if err != nil {
 		return errors.Wrap(err, "error creating CNSI url")
 	}
 
-	var upgrader = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
-	incomingWebSocketConn, err := upgrader.Upgrade(c.Response().Writer, c.Request(), nil)
-	if err != nil {
-		return errors.Wrap(err, "error upgrading incoming connection")
+	transport := http.DefaultTransport.(interface {
+		Clone() *http.Transport
+	}).Clone()
+
+	// Force http/1.1
+	// See here for details: https://github.com/epinio/epinio/issues/1396
+	transport.TLSNextProto = map[string]func(authority string, c *tls.Conn) http.RoundTripper{}
+	transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: skipSllValidation}
+
+	proxy := httputil.ReverseProxy{
+		Director: func(req *http.Request) {
+			req.URL = cnsiURL
+			req.Host = cnsiURL.Host
+			req.URL.Scheme = "https" // Reverse proxy doesn't understand "wss://"
+		},
+		Transport:     transport,
+		FlushInterval: time.Millisecond * 100,
 	}
 
-	websocket.DefaultDialer.TLSClientConfig = &tls.Config{InsecureSkipVerify: skipSllValidation}
-	epinioWebSocketConn, _, err := websocket.DefaultDialer.Dial(cnsiUri.String(), http.Header{})
-	if err != nil {
-		return errors.Wrap(err, "error opening websocket connection to Epinio")
-	}
+	proxy.ServeHTTP(c.Response().Writer, c.Request())
 
-	errChan := make(chan error)
-
-	// read client messages
-	go func() {
-		for {
-			// we don't care about the messages, we just want to close the connection properly
-			_, _, err := incomingWebSocketConn.ReadMessage()
-			if err != nil {
-				log.Debug("error reading message from incomingWebSocketConn ", err)
-				epinioWebSocketConn.Close()
-				incomingWebSocketConn.Close()
-				break
-			}
-		}
-		log.Debug("closing incomingWebSocketConn")
-	}()
-
-	// read Epinio logs and forward them to client
-	go func() {
-		for {
-			// read logs from Epinio
-			_, message, err := epinioWebSocketConn.ReadMessage()
-			if err != nil {
-				log.Debug("error reading message from epinioWebSocketConn ", err)
-				epinioWebSocketConn.Close()
-				incomingWebSocketConn.Close()
-				break
-			}
-
-			err = incomingWebSocketConn.WriteMessage(websocket.TextMessage, message)
-			if err != nil {
-				log.Debug("error writing message to incomingWebSocketConn ", err)
-				epinioWebSocketConn.Close()
-				incomingWebSocketConn.Close()
-				break
-			}
-		}
-		log.Debug("closing epinioWebSocketConn")
-	}()
-
-	return <-errChan
+	return nil
 }
 
-func (p *portalProxy) createUrl(c echo.Context) (*url.URL, bool, error) {
+func (p *portalProxy) createURL(c echo.Context) (*url.URL, bool, error) {
 	var err error
 	uri := url.URL{}
 
@@ -93,7 +64,7 @@ func (p *portalProxy) createUrl(c echo.Context) (*url.URL, bool, error) {
 		return nil, false, errors.Wrap(err, "error getting CNSI record")
 	}
 
-	cnsiUri, _ := url.Parse(cnsiRec.DopplerLoggingEndpoint)
+	cnsiURL, err := url.Parse(cnsiRec.DopplerLoggingEndpoint)
 	if err != nil {
 		return nil, false, errors.Wrap(err, "error parsing Doppler logging endpoint")
 	}
@@ -104,13 +75,14 @@ func (p *portalProxy) createUrl(c echo.Context) (*url.URL, bool, error) {
 	if len(uri.RawPath) > 0 {
 		extraPath = uri.RawPath
 	}
-	cnsiUri.RawPath = path.Join(uri.Path, extraPath)
-	cnsiUri.RawQuery = uri.RawQuery
+	cnsiURL.RawPath = path.Join(uri.Path, extraPath)
+	cnsiURL.RawQuery = uri.RawQuery
 
-	cnsiUri.Path, err = url.PathUnescape(uri.RawPath)
+	cnsiURL.Path, err = url.PathUnescape(uri.RawPath)
 	if err != nil {
 		return nil, false, errors.Wrap(err, "error unescaping path again")
 	}
+	cnsiURL.Path = fmt.Sprintf("/%s", cnsiURL.Path) // Add a leading slash to the Path (needed)
 
-	return cnsiUri, cnsiRec.SkipSSLValidation, nil
+	return cnsiURL, cnsiRec.SkipSSLValidation, nil
 }
