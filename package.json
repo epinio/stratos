@@ -1,6 +1,6 @@
 {
   "name": "epinio-ui-backend",
-  "version": "0.5.0",
+  "version": "0.7.1",
   "description": "Stratos Console",
   "main": "index.js",
   "scripts": {
