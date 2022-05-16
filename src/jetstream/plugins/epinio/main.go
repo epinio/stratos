@@ -4,8 +4,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"os"
-	"strconv"
 
 	eInterfaces "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/interfaces"
 	normanProxy "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/norman"
@@ -41,17 +39,19 @@ func Init(portalProxy interfaces.PortalProxy) (interfaces.StratosPlugin, error) 
 		return nil, fmt.Errorf("Epinio plugin requires auth endpoint type of %s", interfaces.Epinio)
 	}
 
-	epinioApiUrlValue := os.Getenv(epinioApiUrlEnv)
+	epinioApiUrlValue, _ := portalProxy.Env().Lookup(epinioApiUrlEnv)
 	if len(epinioApiUrlValue) == 0 {
 		return nil, fmt.Errorf("Failed to find Epinio API url env `%s`", epinioApiUrlEnv)
 	}
 
-	epinioApiWsUrlValue := os.Getenv(epinioApiWsUrl)
+	epinioApiWsUrlValue, _ := portalProxy.Env().Lookup(epinioApiWsUrl)
 	if len(epinioApiWsUrlValue) == 0 {
 		log.Warnf("Failed to find Epinio WS API url env `%s`", epinioApiWsUrl)
 	}
 
-	epinioApiUrlskipSSLValidation, err := strconv.ParseBool(os.Getenv(epinioApiUrlskipSSLValidationEnv))
+	epinioApiUrlskipSSLValidation, err := portalProxy.Env().Bool(epinioApiUrlskipSSLValidationEnv)
+	log.Warnf("portalProxy.Env().Bool(epinioApiUrlskipSSLValidationEnv): %s", epinioApiUrlskipSSLValidation)
+	log.Warnf("portalProxy.Env().Bool(epinioApiUrlskipSSLValidationEnv): %s", err)
 	if err != nil {
 		epinioApiUrlskipSSLValidation = false
 	}
