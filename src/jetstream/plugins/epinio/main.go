@@ -50,8 +50,6 @@ func Init(portalProxy interfaces.PortalProxy) (interfaces.StratosPlugin, error) 
 	}
 
 	epinioApiUrlskipSSLValidation, err := portalProxy.Env().Bool(epinioApiUrlskipSSLValidationEnv)
-	log.Warnf("portalProxy.Env().Bool(epinioApiUrlskipSSLValidationEnv): %s", epinioApiUrlskipSSLValidation)
-	log.Warnf("portalProxy.Env().Bool(epinioApiUrlskipSSLValidationEnv): %s", err)
 	if err != nil {
 		epinioApiUrlskipSSLValidation = false
 	}
