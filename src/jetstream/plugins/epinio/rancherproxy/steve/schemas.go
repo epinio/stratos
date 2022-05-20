@@ -2,6 +2,7 @@ package steve
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 
@@ -33,6 +34,7 @@ func NewSchema(baseURL, id string) *interfaces.Schema {
 	setting.Type = interfaces.SchemaType
 	setting.Links = make(map[string]string)
 	setting.Links["self"] = fmt.Sprintf("%s/%s", baseURL, id)
+	setting.Links["collection"] = strings.Replace(setting.Links["self"], "v1/schemas/", "v1/", 1)
 	setting.PluralName = id + "s"
 	setting.ResourceMethods = []string{}
 	setting.ResourceFields = make(map[string]interface{})
