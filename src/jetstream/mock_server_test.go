@@ -154,9 +154,17 @@ func setupPortalProxy(db *sql.DB) *portalProxy {
 		AuthEndpointType:     "epinio",
 	}
 
+	envs := env.NewVarSet()
+	envs.AppendSource(func(k string) (string, bool) {
+		if k == "EPINIO_API_URL" {
+			return "abc", true
+		}
+		return "", false
+	})
+
 	os.Setenv("EPINIO_API_URL", "abc")
 
-	pp := newPortalProxy(pc, db, nil, nil, env.NewVarSet())
+	pp := newPortalProxy(pc, db, nil, nil, envs)
 	pp.SessionStore = setupMockPGStore(db)
 	initialisedEndpoint := initCFPlugin(pp)
 	pp.Plugins = make(map[string]interfaces.StratosPlugin)
