@@ -11,6 +11,7 @@ import (
 
 const (
 	epinioVersion = "EPINIO_VERSION"
+	epinioTheme   = "EPINIO_THEME"
 )
 
 func NewDefaultSettings(ec echo.Context) *interfaces.Collection {
@@ -30,11 +31,17 @@ func NewDefaultSettings(ec echo.Context) *interfaces.Collection {
 		epinioVersion = "unknown"
 	}
 
-	col.Data = make([]interface{}, 3)
+	epinioTheme := os.Getenv(epinioTheme)
+	if epinioTheme == "" {
+		epinioTheme = "light"
+	}
+
+	col.Data = make([]interface{}, 4)
 	// Visible to all, regardless of auth
 	col.Data[0] = NewStringSettings(baseURL, "first-login", "false")
 	col.Data[1] = NewStringSettings(baseURL, "ui-pl", "Epinio")
 	col.Data[2] = NewStringSettings(baseURL, "server-version", epinioVersion)
+	col.Data[3] = NewStringSettings(baseURL, "ui-theme", epinioTheme)
 
 	return &col
 }
