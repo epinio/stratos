@@ -224,6 +224,7 @@ func (e *epinioAuth) generateLoginSuccessResponse(c echo.Context, userGUID, user
 		return err
 	}
 
+	// This will register and log the user in to the sole epinio instance. It should really move to here
 	err = e.p.ExecuteLoginHooks(c)
 	if err != nil {
 		log.Warnf("Login hooks failed: %v", err)
@@ -267,6 +268,11 @@ func (a *epinioAuth) logout(c echo.Context) error {
 	err := a.p.clearSession(c)
 	if err != nil {
 		log.Errorf("Unable to clear session: %v", err)
+	}
+
+	err = a.p.ExecuteLogoutHooks(c)
+	if err != nil {
+		log.Warnf("Logout hooks failed: %v", err)
 	}
 
 	// Send JSON document

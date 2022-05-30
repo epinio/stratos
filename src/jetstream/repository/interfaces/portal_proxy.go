@@ -76,6 +76,8 @@ type PortalProxy interface {
 	DeleteEndpointToken(cnsiGUID string, userGUID string) error
 	AddLoginHook(priority int, function LoginHookFunc) error
 	ExecuteLoginHooks(c echo.Context) error
+	AddLogoutHook(priority int, function LogoutHookFunc) error
+	ExecuteLogoutHooks(c echo.Context) error
 
 	// Plugins
 	GetPlugin(name string) interface{}

@@ -204,8 +204,11 @@ func (epinio *Epinio) findEpinioEndpoint() (*interfaces.CNSIRecord, error) {
 
 // Init performs plugin initialization
 func (epinio *Epinio) Init() error {
-	// Add login hook to automatically register and connect to the Cloud Foundry when the user logs in
+	// Add login hook to automatically register and connect to the Epinio instance when the user logs in
 	epinio.portalProxy.AddLoginHook(0, epinio.loginHook)
+
+	// Add logout hook to automatically disconnect the Epinio instance when the user logs out
+	epinio.portalProxy.AddLogoutHook(0, epinio.logoutHook)
 
 	cnsiName := "default" // This must match EPINIO_STANDALONE_CLUSTER_ID in front end
 	apiEndpoint := epinio.epinioApiUrl
@@ -298,6 +301,30 @@ func (epinio *Epinio) loginHook(context echo.Context) error {
 	_, err = epinio.portalProxy.DoLoginToCNSI(context, epinioCnsi.GUID, false)
 	if err != nil {
 		log.Warnf("Could not auto-connect using credentials to auto-registered endpoint: %s", err.Error())
+		return err
+	}
+	return nil
+}
+
+func (epinio *Epinio) logoutHook(context echo.Context) error {
+	log.Infof("Determining if user should auto-connect to %s.", epinio.epinioApiUrl)
+
+	userGUID, err := epinio.portalProxy.GetSessionStringValue(context, "user_id")
+	if err != nil {
+		return fmt.Errorf("could not determine user_id from session: %s", err)
+	}
+
+	epinioCnsi, err := epinio.portalProxy.GetCNSIRecordByEndpoint(epinio.epinioApiUrl)
+	if err != nil {
+		err := "could not find pre-registered epinio instance"
+		log.Warnf(err)
+		return errors.New(err)
+	}
+
+	log.Info("Auto-connecting to the auto-registered endpoint with credentials")
+	err = epinio.portalProxy.DeleteEndpointToken(epinioCnsi.GUID, userGUID)
+	if err != nil {
+		log.Warnf("Could not auto-disconnect creds to auto-registered endpoint: %s", err.Error())
 		return err
 	}
 	return nil

@@ -167,6 +167,12 @@ type LoginHook struct {
 	Function LoginHookFunc
 }
 
+type LogoutHookFunc func(c echo.Context) error
+type LogoutHook struct {
+	Priority int
+	Function LogoutHookFunc
+}
+
 type ProxyRequestInfo struct {
 	EndpointGUID string
 	URI          *url.URL
@@ -394,6 +400,7 @@ type PortalConfig struct {
 	ConsoleVersion                     string
 	IsCloudFoundry                     bool
 	LoginHooks                         []LoginHook
+	LogoutHooks                        []LogoutHook
 	SessionStore                       SessionStorer
 	ConsoleConfig                      *ConsoleConfig
 	PluginConfig                       map[string]string

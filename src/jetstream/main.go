@@ -1174,6 +1174,35 @@ func (p *portalProxy) ExecuteLoginHooks(c echo.Context) error {
 	return nil
 }
 
+func (p *portalProxy) AddLogoutHook(priority int, function interfaces.LogoutHookFunc) error {
+	p.GetConfig().LogoutHooks = append(p.GetConfig().LogoutHooks, interfaces.LogoutHook{
+		Priority: priority,
+		Function: function,
+	})
+	return nil
+}
+
+func (p *portalProxy) ExecuteLogoutHooks(c echo.Context) error {
+	hooks := p.GetConfig().LogoutHooks
+	sort.SliceStable(hooks, func(i, j int) bool {
+		return hooks[i].Priority < hooks[j].Priority
+	})
+
+	erred := false
+	for _, hook := range hooks {
+		err := hook.Function(c)
+		if err != nil {
+			erred = true
+			log.Errorf("Failed to execute log out hook: %v", err)
+		}
+	}
+
+	if erred {
+		return fmt.Errorf("Failed to execute one or more logout hooks")
+	}
+	return nil
+}
+
 // Custom error handler to let Angular app handle application URLs (catches non-backend 404 errors)
 func getUICustomHTTPErrorHandler(staticDir string, defaultHandler echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 	return func(err error, c echo.Context) {
