@@ -829,7 +829,7 @@ func start(config interfaces.PortalConfig, p *portalProxy, needSetupMiddleware b
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     config.AllowedOrigins,
-		AllowMethods:     []string{echo.GET, echo.PUT, echo.POST, echo.DELETE},
+		AllowMethods:     []string{echo.GET, echo.PUT, echo.POST, echo.DELETE, echo.PATCH, echo.OPTIONS},
 		AllowCredentials: true,
 	}))
 	e.Use(middleware.SecureWithConfig(middleware.SecureConfig{
