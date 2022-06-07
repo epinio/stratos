@@ -33,7 +33,8 @@ func (p *portalProxy) ProxyWebSocketRequest(c echo.Context) error {
 		Director: func(req *http.Request) {
 			req.URL = cnsiURL
 			req.Host = cnsiURL.Host
-			req.URL.Scheme = "https" // Reverse proxy doesn't understand "wss://"
+			req.Header.Set("origin", "") // If enabled cors has already been validated
+			req.URL.Scheme = "https"     // Reverse proxy doesn't understand "wss://"
 		},
 		Transport:     transport,
 		FlushInterval: time.Millisecond * 100,
