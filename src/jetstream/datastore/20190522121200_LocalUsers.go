@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"strings"
 
-	"bitbucket.org/liamstask/goose/lib/goose"
+	"github.com/pressly/goose"
 )
 
 // NOTE: This migration script has been modified

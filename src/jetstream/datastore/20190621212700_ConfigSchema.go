@@ -3,7 +3,7 @@ package datastore
 import (
 	"database/sql"
 
-	"bitbucket.org/liamstask/goose/lib/goose"
+	"github.com/pressly/goose"
 )
 
 func init() {

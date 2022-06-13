@@ -20,7 +20,7 @@ import (
 	// Sqlite driver
 	_ "github.com/mattn/go-sqlite3"
 
-	"bitbucket.org/liamstask/goose/lib/goose"
+	"github.com/pressly/goose"
 )
 
 const (

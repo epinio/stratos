@@ -3,7 +3,6 @@ module github.com/epinio/ui-backend/src/jetstream
 go 1.18
 
 require (
-	bitbucket.org/liamstask/goose v0.0.0-20150115234039-8488cc47d90c
 	github.com/antonlindstrom/pgstore v0.0.0-20170604072116-a407030ba6d0
 	github.com/cf-stratos/mysqlstore v0.0.0-20170822100912-304308519d13
 	github.com/go-sql-driver/mysql v1.5.0
@@ -35,6 +34,7 @@ require (
 	github.com/lib/pq v1.10.4 // indirect
 	github.com/mattn/go-colorable v0.1.11 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/pressly/goose v2.7.0+incompatible // indirect
 	github.com/smartystreets/assertions v0.0.0-20190401211740-f487f9de1cd3 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect

@@ -26,7 +26,7 @@ import (
 
 	"github.com/epinio/ui-backend/src/jetstream/custombinder"
 
-	"bitbucket.org/liamstask/goose/lib/goose"
+	"github.com/pressly/goose"
 	"github.com/antonlindstrom/pgstore"
 	"github.com/cf-stratos/mysqlstore"
 	"github.com/epinio/ui-backend/src/jetstream/cf-common/env"
