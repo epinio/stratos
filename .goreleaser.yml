@@ -87,4 +87,3 @@ dockers:
     # and use wildcards when you `COPY`/`ADD` in your Dockerfile.
     extra_files:
     - ui/
-    - plugins/epinio/static/
