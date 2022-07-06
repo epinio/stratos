@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"math"
 	"net/http"
-	"net/url"
 
 	log "github.com/sirupsen/logrus"
 
@@ -185,7 +184,7 @@ func (a *epinioAuth) verifyEpinioCreds(username, password string) error {
 		return fmt.Errorf(msg, err)
 	}
 
-	req.SetBasicAuth(url.QueryEscape(username), url.QueryEscape(password))
+	req.SetBasicAuth(username, password)
 
 	var h = a.p.GetHttpClientForRequest(req, epinioEndpoint.SkipSSLValidation)
 	res, err := h.Do(req)
