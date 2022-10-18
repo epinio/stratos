@@ -12,19 +12,19 @@ import (
 // Get the available auth providers
 // /v3/authProviders
 func GetAuthProviders(ec echo.Context) error {
-	col := NewAuthProvider(ec, "local")
+	col := NewAuthProviders(ec)
 
 	return api.SendResponse(ec, col)
 }
 
-// /v3/authProviders
+// /v3/users
 func GetUser(ec echo.Context) error {
 	user := NewUser(interfaces.GetBaseURL(ec), ec.Get("user_id").(string))
 
 	return api.SendResponse(ec, user)
 }
 
-// /v3/users
+// /v3/tokens
 func TokenLogout(ec echo.Context, p jInterfaces.PortalProxy) error {
 	ec.Response().Header().Set("X-Api-Cattle-Auth", "false")
 	return p.GetStratosAuthService().Logout(ec)

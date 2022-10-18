@@ -173,6 +173,9 @@ func (epinio *Epinio) AddRootGroupRoutes(echoGroup *echo.Group) {
 	normanPublicGroup := rancherProxyGroup.Group("/v3-public")
 	normanPublicGroup.Use(p.SetSecureCacheContentMiddleware)
 	normanPublicGroup.POST("/authProviders/local/login", p.GetStratosAuthService().Login)
+	// TODO: RC
+	normanPublicGroup.POST("/authProviders/keycloakoidc/login", p.GetStratosAuthService().Login)
+
 	normanPublicGroup.GET("/authProviders", normanProxy.GetAuthProviders)
 
 }

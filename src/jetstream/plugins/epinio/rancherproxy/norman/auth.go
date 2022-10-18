@@ -8,18 +8,9 @@ import (
 	"github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/interfaces"
 )
 
-func NewAuthProvider(ec echo.Context, id string) *interfaces.Collection {
-	col := interfaces.Collection{
-		Type:         interfaces.CollectionType,
-		ResourceType: interfaces.AuthProviderResourceType,
-		Actions:      make(map[string]string),
-		Links:        make(map[string]string),
-	}
-
-	col.Links["self"] = interfaces.GetSelfLink(ec)
+func NewAuthProvider(ec echo.Context, id string) interfaces.AuthProvider {
 
 	typ := fmt.Sprintf("%sProvider", id)
-
 	ap := interfaces.AuthProvider{
 		ID:       id,
 		BaseType: interfaces.AuthProviderResourceType,
@@ -31,8 +22,28 @@ func NewAuthProvider(ec echo.Context, id string) *interfaces.Collection {
 	ap.Links["self"] = interfaces.GetSelfLink(ec, id)
 	ap.Actions["login"] = interfaces.GetSelfLink(ec, id, "login")
 
-	col.Data = make([]interface{}, 1)
-	col.Data[0] = ap
+	return ap
+}
+
+func NewAuthProviders(ec echo.Context) *interfaces.Collection {
+	col := interfaces.Collection{
+		Type:         interfaces.CollectionType,
+		ResourceType: interfaces.AuthProviderResourceType,
+		Actions:      make(map[string]string),
+		Links:        make(map[string]string),
+	}
+
+	col.Links["self"] = interfaces.GetSelfLink(ec)
+
+	col.Data = make([]interface{}, 2)
+
+	col.Data[0] = NewAuthProvider(ec, "local")
+
+	oidc := NewAuthProvider(ec, "keycloakoidc")
+	// TODO: RC DEX Address replace 'epinio' with 'auth'?
+	// https://github.com/login/oauth/authorize?client_id=40099713a9fad881b5af
+	oidc.RedirectUrl = "DOOPDOOP"
+	col.Data[1] = oidc
 
 	return &col
 }
