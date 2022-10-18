@@ -19,8 +19,16 @@ npm run build-backend
 
 ```
 cd src/jetstream
-EPINIO_API_URL=<epinio API URL> EPINIO_API_SKIP_SSL=<true|false> EPINIO_VERSION=dev ./jetstream
+EPINIO_API_URL=<epinio API URL> /
+EPINIO_API_URL=<epinio http/s API URL> /
+EPINIO_WSS_URL=<epinio wss API URL> /
+EPINIO_API_SKIP_SSL=<true|false> /
+EPINIO_VERSION=dev /
+AUTH_ENDPOINT_TYPE=epinio /
+./jetstream
 ```
+
+Alternatively create a `config.properties` file in `src/jetstream` with the ENVVARS above
 
 ## Run Frontend
 In `rancher/dashboard` repo, `epinio-dev` branch
@@ -28,7 +36,7 @@ In `rancher/dashboard` repo, `epinio-dev` branch
 ```
 git checkout epinio-dev
 yarn install
-API=https://localhost:5443 RANCHER_ENV=epinio yarn mem-dev --spa
+EXCLUDES_PKG=harvester,rancher-components EXCLUDES_NUXT_PLUGINS=plugins/version,plugins/plugin RANCHER_ENV=epinio API=https://localhost:5443 yarn mem-dev
 ```
 
 > Note - If switching between `RANCHER_ENV`s you will need to `yarn clean`
