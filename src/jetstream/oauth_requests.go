@@ -30,7 +30,7 @@ func (p *portalProxy) OAuthHandlerFunc(cnsiRequest *interfaces.CNSIRequest, req 
 				}
 				tokenRec = refreshedTokenRec
 			}
-			req.Header.Set("Authorization", "Bearer "+tokenRec.AuthToken) // Note - Needs to be capitalised!!! // TODO: RC
+			req.Header.Set("Authorization", "Bearer "+tokenRec.AuthToken) // Note - Needs to be capitalised!!!
 
 			var client http.Client
 			client = p.GetHttpClientForRequest(req, cnsi.SkipSSLValidation)

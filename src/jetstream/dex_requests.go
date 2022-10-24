@@ -14,52 +14,9 @@ import (
 func (p *portalProxy) DoDexFlowRequest(cnsiRequest *interfaces.CNSIRequest, req *http.Request) (*http.Response, error) {
 	log.Debug("DoDexFlowRequest")
 
-	// client.New(context.Background(), &settings.Settings{API: srv.URL})
-	// oidcProvider, _ := dex.NewOIDCProvider(req.Context(), p) // TODO: RC do only once
-
-	// tokenRec, cnsi, err := p.getCNSIRequestRecords(cnsiRequest)
-	// userToken, ok := p.GetCNSITokenRecordWithDisconnected(cnsiRequest.GUID, cnsiRequest.UserGUID)
-	// if !ok {
-	// 	return nil, fmt.Errorf("Info could not be found for user with GUID %s")
-	// }
-	// t := &oauth2.Token{
-	// 	AccessToken:  userToken.AuthToken,
-	// 	TokenType:    "Bearer",
-	// 	RefreshToken: userToken.RefreshToken,
-	// 	Expiry:       time.Unix(userToken.TokenExpiry, 0),
-	// }
-	// Not not secure!
-	// client := oidcProvider.Config.Client(req.Context(), t) // TODO: Error
-
-	// return client.Do(req)
-
-	// AccessToken string `json:"access_token"`
-
-	// // TokenType is the type of token.
-	// // The Type method returns either this or "Bearer", the default.
-	// TokenType string `json:"token_type,omitempty"`
-
-	// // RefreshToken is a token that's used by the application
-	// // (as opposed to the user) to refresh the access token
-	// // if it expires.
-	// RefreshToken string `json:"refresh_token,omitempty"`
-
-	// // Expiry is the optional expiration time of the access token.
-	// //
-	// // If zero, TokenSource implementations will reuse the same
-	// // token forever and RefreshToken or equivalent
-	// // mechanisms for that TokenSource will not be used.
-	// Expiry time.Time `json:"expiry,omitempty"`
-
-	// // raw optionally contains extra metadata from the server
-	// // when updating a token.
-	// raw interface{}
-
 	authHandler := p.OAuthHandlerFunc(cnsiRequest, req, func(skipSSLValidation bool, cnsiGUID, userGUID, client, clientSecret, tokenEndpoint string) (t interfaces.TokenRecord, err error) {
 		return p.RefreshDexToken(req.Context(), skipSSLValidation, cnsiGUID, userGUID, client, clientSecret, tokenEndpoint)
 	})
-
-	// authHandler := p.OAuthHandlerFunc(cnsiRequest, req, p.RefreshDexToken)
 
 	return p.DoAuthFlowRequest(cnsiRequest, req, authHandler)
 }
@@ -71,13 +28,12 @@ func (p *portalProxy) RefreshDexToken(ctx context.Context, skipSSLValidation boo
 
 	userToken, ok := p.GetCNSITokenRecordWithDisconnected(cnsiGUID, userGUID)
 	if !ok {
-		return t, fmt.Errorf("Info could not be found for user with GUID %s", userGUID)
+		return t, fmt.Errorf("info could not be found for user with GUID %s", userGUID)
 	}
 
-	// oidcProvider, _ := dex.NewOIDCProvider(ctx, p)
-	oidcProvider, err := p.GetDex() // TODO: RC error
+	oidcProvider, err := p.GetDex()
 	if err != nil {
-		return t, err
+		return t, fmt.Errorf("failed to get dex client: %+v", err)
 	}
 
 	oathToken := &oauth2.Token{
@@ -88,16 +44,10 @@ func (p *portalProxy) RefreshDexToken(ctx context.Context, skipSSLValidation boo
 	}
 
 	tokenSource := oidcProvider.GetConfig().TokenSource(ctx, oathToken)
-	newOathToken, err := tokenSource.Token() // TODO: err
-
-	// TODO: RC err
-	// token, err := oidcProvider.ExchangeWithPKCE(ctx, userToken.RefreshToken, userToken.Metadata) // Metadata contains the code_verifier string
-
+	newOathToken, err := tokenSource.Token()
 	if err != nil {
-		return t, fmt.Errorf("Failed to fetch refreshed token: %+v", err)
+		return t, fmt.Errorf("failed to fetch refreshed token: %+v", err)
 	}
-
-	log.Warnf("RefreshDexToken: token: %+v", newOathToken.AccessToken)
 
 	tokenRecord := &interfaces.TokenRecord{
 		AuthType:     interfaces.AuthTypeDex,
@@ -107,54 +57,11 @@ func (p *portalProxy) RefreshDexToken(ctx context.Context, skipSSLValidation boo
 		Metadata:     userToken.Metadata, // This will be used for refreshing the token
 	}
 
-	_, err = oidcProvider.Verify(ctx, newOathToken.AccessToken)
-	if err != nil {
-		return t, fmt.Errorf("Failed to verify refreshed token: %+v", err)
-	}
-
-	// tokenEndpointWithPath := fmt.Sprintf("%s/oauth/token", tokenEndpoint)
-
-	// // Parse out token metadata is there is some, and override some of theser parameters
-
-	// var scopes string
-
-	// log.Info(userToken.Metadata)
-	// if len(userToken.Metadata) > 0 {
-	// 	metadata := &interfaces.OAuth2Metadata{}
-	// 	if err := json.Unmarshal([]byte(userToken.Metadata), metadata); err == nil {
-	// 		log.Info(metadata)
-	// 		log.Info(metadata.ClientID)
-	// 		log.Info(metadata.ClientSecret)
-
-	// 		if len(metadata.ClientID) > 0 {
-	// 			client = metadata.ClientID
-	// 		}
-	// 		if len(metadata.ClientSecret) > 0 {
-	// 			clientSecret = metadata.ClientSecret
-	// 		}
-	// 		if len(metadata.IssuerURL) > 0 {
-	// 			tokenEndpoint = metadata.IssuerURL
-	// 			tokenEndpointWithPath = fmt.Sprintf("%s/token", tokenEndpoint)
-	// 		}
-	// 	}
-	// }
-
-	// uaaRes, err := p.getUAATokenWithRefreshToken(skipSSLValidation, userToken.RefreshToken, client, clientSecret, tokenEndpointWithPath, scopes)
+	// TODO: RC not needed....
+	// _, err = oidcProvider.Verify(ctx, newOathToken.AccessToken)
 	// if err != nil {
-	// 	return t, fmt.Errorf("Token refresh request failed: %v", err)
+	// 	return t, fmt.Errorf("Failed to verify refreshed token: %+v", err)
 	// }
-
-	// u, err := p.GetUserTokenInfo(uaaRes.IDToken)
-	// if err != nil {
-	// 	return t, fmt.Errorf("Could not get user token info from id token")
-	// }
-
-	// u.UserGUID = userGUID
-
-	// tokenRecord := p.InitEndpointTokenRecord(u.TokenExpiry, uaaRes.AccessToken, uaaRes.RefreshToken, userToken.Disconnected)
-	// tokenRecord.AuthType = interfaces.AuthTypeOIDC
-	// // Copy across the metadata from the original token
-	// tokenRecord.Metadata = userToken.Metadata
 
 	err = p.setCNSITokenRecord(cnsiGUID, userGUID, *tokenRecord)
 	if err != nil {

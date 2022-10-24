@@ -9,7 +9,6 @@ import (
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/dchest/uniuri"
-	"github.com/labstack/gommon/log"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 
@@ -20,13 +19,14 @@ import (
 const (
 	// https://dexidp.io/docs/custom-scopes-claims-clients/#public-clients
 	OutOfBrowserURN = "urn:ietf:wg:oauth:2.0:oob"
+	clientID        = "epinio-ui"
 )
 
 // https://github.com/epinio/epinio/blob/main/internal/dex/dex.go
 
 var (
 	// "openid" is a required scope for OpenID Connect flows.
-	// Other scopes, such as "groups" can be requested.
+	// Other scopes, such as "groups" can be requested. // TODO: RC name?
 	DefaultScopes = []string{oidc.ScopeOpenID, oidc.ScopeOfflineAccess, "profile", "email", "groups"}
 )
 
@@ -37,13 +37,10 @@ type OIDCProvider struct {
 	Provider *oidc.Provider
 	Config   *oauth2.Config
 	P        jInterfaces.PortalProxy
-	// AuthCodeURLWithPKCE func() (string, string)
-	// AddScopes           func(scopes ...string)
-	// ExchangeWithPKCE    func(ctx context.Context, authCode, codeVerifier string)
-	// Verify              func(ctx context.Context, rawIDToken string) (*oidc.IDToken, error)
 }
 
 func dexUrl(p jInterfaces.PortalProxy) (string, error) {
+	// issuer := "http://dex.epinio.svc.cluster.local:5556" // TODO: RC this will be needed when deployed?
 	epinioCnsi, err := epinio_utils.FindEpinioEndpoint(p)
 
 	if err != nil {
@@ -54,10 +51,6 @@ func dexUrl(p jInterfaces.PortalProxy) (string, error) {
 	authUrl = strings.Replace(authUrl, "epinio.", "auth.", 1)
 	return authUrl, nil
 }
-
-// func epinioEndpoint(p jInterfaces.PortalProxy) (jInterfaces.CNSIRecord, error) {
-// 	return epinio_utils.FindEpinioEndpoint(p)
-// }
 
 func createContext(p jInterfaces.PortalProxy, defaultCtx context.Context) (context.Context, error) {
 	epinioCnsi, err := epinio_utils.FindEpinioEndpoint(p)
@@ -82,22 +75,13 @@ func createContext(p jInterfaces.PortalProxy, defaultCtx context.Context) (conte
 
 // NewOIDCProvider construct an OIDCProvider fetching its configuration
 func NewOIDCProvider(ctx context.Context, p jInterfaces.PortalProxy) (jInterfaces.OIDCProvider, error) {
-	issuer, _ := dexUrl(p) // TODO: RC
-	// issuer := "http://dex.epinio.svc.cluster.local:5556"
-	// issuerUnsecure := false
-	clientID := "epinio-ui"
+	issuer, _ := dexUrl(p)
 	endpoint, err := url.Parse(issuer)
 	if err != nil {
 		return nil, errors.Wrap(err, "parsing the issuer URL")
 	}
 
-	log.Warnf("NewOIDCProvider: issuer %+v. endpoint: %+v", issuer, endpoint)
-
-	// var a jInterfaces.OIDCProvider
-	b, _ := NewOIDCProviderWithEndpoint(p, ctx, issuer, false, clientID, endpoint)
-
-	// a = b
-	return b, nil
+	return NewOIDCProviderWithEndpoint(p, ctx, issuer, false, clientID, endpoint)
 }
 
 // NewOIDCProviderWithEndpoint construct an OIDCProvider fetching its configuration from the endpoint URL
@@ -110,32 +94,27 @@ func NewOIDCProviderWithEndpoint(p jInterfaces.PortalProxy, ctx context.Context,
 	// if issuer != endpoint.String() && strings.HasSuffix(endpoint.Hostname(), ".svc.cluster.local") {
 	// 	ctx = oidc.InsecureIssuerURLContext(ctx, issuer) // TODO: RC
 	// }
-	log.Warnf("NewOIDCProviderWithEndpoint: issuerUnsecure %+v", issuerUnsecure)
 	if issuerUnsecure {
-		log.Warnf("NewOIDCProviderWithEndpoint: issuerUnsecure: %+v. issuer: %+v. endpoint: %+v", issuerUnsecure, issuer, endpoint.String())
-
 		ctx = oidc.InsecureIssuerURLContext(ctx, issuer)
 	}
 
 	newCtx, err := createContext(p, ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create context")
+	}
 
 	provider, err := oidc.NewProvider(newCtx, endpoint.String())
 	if err != nil {
 		return nil, errors.Wrap(err, "creating the provider")
 	}
 
-	log.Warnf("NewOIDCProviderWithEndpoint: DefaultScopes: %+v", DefaultScopes)
-
 	config := &oauth2.Config{
 		Endpoint: provider.Endpoint(),
 		ClientID: clientID,
 		// TODO: RC secret
-		RedirectURL: "https://localhost:8005/verify-auth",
-		// RedirectURL: OutOfBrowserURN,
-		Scopes: DefaultScopes,
+		RedirectURL: "https://localhost:8005/verify-auth", // TODO: RC
+		Scopes:      DefaultScopes,
 	}
-
-	log.Warnf("NewOIDCProviderWithEndpoint: DefaultScopes: %+v", DefaultScopes)
 
 	return &OIDCProvider{
 		Issuer:   issuer,
@@ -171,7 +150,10 @@ func (pc *OIDCProvider) AddScopes(scopes ...string) {
 // ExchangeWithPKCE will exchange the authCode with a token, checking if the codeVerifier is valid
 func (pc *OIDCProvider) ExchangeWithPKCE(ctx context.Context, authCode, codeVerifier string) (*oauth2.Token, error) {
 
-	newCtx, _ := createContext(pc.P, ctx) // TODO: RC error
+	newCtx, err := createContext(pc.P, ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create context")
+	}
 
 	token, err := pc.Config.Exchange(newCtx, authCode, oauth2.SetAuthURLParam("code_verifier", codeVerifier))
 	if err != nil {
@@ -182,7 +164,10 @@ func (pc *OIDCProvider) ExchangeWithPKCE(ctx context.Context, authCode, codeVeri
 
 // Verify will verify the token, and it will return an oidc.IDToken
 func (pc *OIDCProvider) Verify(ctx context.Context, rawIDToken string) (*oidc.IDToken, error) {
-	newCtx, _ := createContext(pc.P, ctx) // TODO: RC error
+	newCtx, err := createContext(pc.P, ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create context")
+	}
 
 	keySet := oidc.NewRemoteKeySet(newCtx, pc.Endpoint.String()+"/keys")
 	verifier := oidc.NewVerifier(pc.Issuer, keySet, &oidc.Config{ClientID: pc.Config.ClientID})

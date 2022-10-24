@@ -1073,12 +1073,6 @@ func (p *portalProxy) registerRoutes(e *echo.Echo, needSetupMiddleware bool) {
 	// Connect to Endpoint (SSO)
 	stableAPIGroup.GET("/tokens", p.ssoLoginToCNSI)
 
-	// CNSI operations
-	// stableAPIGroup.GET("/endpoints", p.listCNSIs) TODO: RC Q N
-
-	// Proxy single request
-	// stableAPIGroup.GET("/proxy/:uuid/*", p.ProxySingleRequest) // TODO: RC Q N
-
 	sessionAuthGroup := sessionGroup.Group("/auth")
 
 	// Connect to Endpoint (SSO)

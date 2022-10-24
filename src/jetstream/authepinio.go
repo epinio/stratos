@@ -1,5 +1,11 @@
 package main
 
+// TODO: RC ensure state we sent matches state back in verify
+// TODO: RC validate token claims/scopes with required claims/scopes
+// TODO: RC why always grant permissions? https://github.com/dexidp/dex/issues/1197
+
+// https://github.com/epinio/epinio/blob/5575038a4b06ad57fc15258854ff6f42413c6020/internal/cli/usercmd/login_oidc.go
+
 import (
 	"database/sql"
 	"encoding/base64"
@@ -14,8 +20,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	eInterfaces "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/interfaces"
 	"github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy"
+	epinio_utils "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/utils"
 
 	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 )
@@ -97,8 +103,7 @@ func (a *epinioAuth) GetUsername(userid string) (string, error) {
 func (a *epinioAuth) GetUser(userGUID string) (*interfaces.ConnectedUser, error) {
 	log.Debug("GetUser")
 
-	var scopes []string
-	scopes = make([]string, 0) // User has no stratos scopes such as "stratos.admin", "password.write", "scim.write"
+	scopes := make([]string, 0) // User has no stratos scopes such as "stratos.admin", "password.write", "scim.write"
 
 	connectedUser := &interfaces.ConnectedUser{
 		GUID:   userGUID,
@@ -114,12 +119,11 @@ func (a *epinioAuth) BeforeVerifySession(c echo.Context) {}
 
 func (a *epinioAuth) VerifySession(c echo.Context, sessionUser string, sessionExpireTime int64) error {
 	// Never expires
-	// Only really used by `/v1/auth/verify`
-	// TODO: RC if dex...
+	// Only used by `/v1/auth/verify`
 	return nil
 }
 
-//epinioLocalLogin verifies local user credentials against our DB
+//epinioLocalLogin verifies local user credentials
 func (a *epinioAuth) epinioLocalLogin(c echo.Context) (string, string, error) {
 	log.Debug("epinioLocalLogin")
 
@@ -149,22 +153,15 @@ func (a *epinioAuth) getRancherUsernameAndPassword(c echo.Context) (string, stri
 
 	var params rancherproxy.LoginParams
 	if err = json.Unmarshal(body, &params); err != nil {
-		return "", "", errors.New("Failed to parse body with username/password")
+		return "", "", errors.New("failed to parse body with username/password")
 	}
 
 	username := params.Username
 	password := params.Password
 
 	if len(username) == 0 || len(password) == 0 {
-		return "", username, errors.New("Username and/or password required")
+		return "", username, errors.New("username and/or password required")
 	}
-
-	// username := ec.Get("rancher_username").(string)
-	// password := ec.Get("rancher_password").(string)
-
-	// if len(username) == 0 || len(password) == 0 {
-	// 	return nil, false, errors.New("username and/or password not present in context")
-	// }
 
 	authString := fmt.Sprintf("%s:%s", username, password)
 	base64EncodedAuthString := base64.StdEncoding.EncodeToString([]byte(authString))
@@ -178,10 +175,6 @@ func (a *epinioAuth) getRancherUsernameAndPassword(c echo.Context) (string, stri
 	}
 	c.Set("token", tr)
 
-	// Set these so they're available in the epinio plugin login
-	// c.Set("rancher_username", username)
-	// c.Set("rancher_password", password)
-
 	return username, password, nil
 }
 
@@ -189,20 +182,9 @@ func (a *epinioAuth) verifyLocalLoginCreds(username, password string) error {
 	log.Debug("verifyEpinioCreds")
 
 	// Find the epinio endpoint
-	endpoints, err := a.p.ListEndpoints()
+	epinioEndpoint, err := epinio_utils.FindEpinioEndpoint(a.p)
+
 	if err != nil {
-		return fmt.Errorf("failed to fetch list of endpoints: %+v", err)
-	}
-
-	var epinioEndpoint *interfaces.CNSIRecord
-	for _, e := range endpoints {
-		if e.CNSIType == eInterfaces.EndpointType {
-			epinioEndpoint = e
-			break
-		}
-	}
-
-	if epinioEndpoint == nil {
 		return fmt.Errorf("failed to find an epinio endpoint")
 	}
 
@@ -230,12 +212,11 @@ func (a *epinioAuth) verifyLocalLoginCreds(username, password string) error {
 }
 
 // ------------------
-//epinioLocalLogin verifies local user credentials against our DB
+//epinioOIDCLogin verifies DEX credentials
 func (a *epinioAuth) epinioOIDCLogin(c echo.Context) (string, string, error) {
-	// TODO: RC run through this and wrap errors in correct http status code
-
-	// TODO: RC Q what does epinio do on expirer, do they use .token / .client?
 	log.Debug("epinioOIDCLogin")
+
+	// TODO: RC run through this and wrap errors in correct http status code
 
 	defer c.Request().Body.Close()
 	body, err := ioutil.ReadAll(c.Request().Body)
@@ -256,21 +237,20 @@ func (a *epinioAuth) epinioOIDCLogin(c echo.Context) (string, string, error) {
 		return "", "", errors.New("Auth code required")
 	}
 
-	// https://github.com/epinio/epinio/blob/5575038a4b06ad57fc15258854ff6f42413c6020/internal/cli/usercmd/login_oidc.go
-
 	oidcProvider, err := a.p.GetDex()
 
 	if err != nil {
 		return "", "", err
 	}
 
-	oidcProvider.AddScopes("audience:server:client_id:epinio-api")                                       // TODO: RC move to GetDex?
-	token, err := oidcProvider.ExchangeWithPKCE(c.Request().Context(), params.Code, params.CodeVerifier) // TODO: RC err
+	// TODO: RC move to GetDex?
+	oidcProvider.AddScopes("audience:server:client_id:epinio-api")
+	token, err := oidcProvider.ExchangeWithPKCE(c.Request().Context(), params.Code, params.CodeVerifier)
 	if err != nil {
-		return "", "", err
+		msg := "Failed to get token from code: %+v"
+		log.Errorf(msg, err)
+		return "", "", fmt.Errorf(msg, err)
 	}
-
-	log.Warnf("epinioOIDCLogin: token: %+v", token.TokenType)
 
 	tr := &interfaces.TokenRecord{
 		AuthType:     interfaces.AuthTypeDex,
@@ -280,11 +260,11 @@ func (a *epinioAuth) epinioOIDCLogin(c echo.Context) (string, string, error) {
 		Metadata:     params.CodeVerifier, // This will be used for refreshing the token
 	}
 
-	log.Warnf("epinioOIDCLogin: tr: %+v", tr)
-
 	idToken, err := oidcProvider.Verify(c.Request().Context(), token.AccessToken)
 	if err != nil {
-		return "", "", err
+		msg := "Failed to verify fetched token: %+v"
+		log.Errorf(msg, err)
+		return "", "", fmt.Errorf(msg, err)
 	}
 
 	var claims struct {
@@ -292,31 +272,16 @@ func (a *epinioAuth) epinioOIDCLogin(c echo.Context) (string, string, error) {
 		Groups []string `json:"groups"`
 	}
 	if err := idToken.Claims(&claims); err != nil {
-		return "", "", err
+		msg := "Token in unexpected format: %+v"
+		log.Errorf(msg, err)
+		return "", "", fmt.Errorf(msg, err)
 	}
 
-	log.Warnf("epinioOIDCLogin: idToken: %+v. Claims: %+v", idToken, claims)
-
-	// u, err := a.p.GetUserTokenInfo(token.AccessToken) // TODO: RC error. DOESN@T WORK, BUT SHOULD
-
-	// log.Warnf("epinioOIDCLogin: u: %+v. err: %+v", u, err)
-	// log.Warnf("epinioOIDCLogin: u.UserGUID: %+v. u.UserName: %+v", u.UserGUID, u.UserName)
-
-	// Set these so they're available in the epinio plugin login
 	c.Set("token", tr)
 
 	return claims.Email, claims.Email, nil
 
 }
-
-// func (a *epinioAuth) epinioOIDCGetTokenWithAuthCode(c echo.Context) (string, string, error) {
-// 	// swap auth code for token with deets
-// 	return "", "", nil
-// }
-
-// TODO: RC if request fails, fetch new token using refresh thingy
-// TODO: RC ensure state we sent matches state back in verify
-// TODO: RC validate token claims/scopes with required claims/scopes
 
 // ------------------
 //generateLoginSuccessResponse
