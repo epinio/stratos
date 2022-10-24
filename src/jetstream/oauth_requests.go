@@ -18,7 +18,10 @@ func (p *portalProxy) OAuthHandlerFunc(cnsiRequest *interfaces.CNSIRequest, req 
 
 		for {
 			expTime := time.Unix(tokenRec.TokenExpiry, 0)
+			log.Warnf("OAuthHandlerFunc: expTime: %+v. time.Now(): %+v", expTime, time.Now())
+
 			if got401 || expTime.Before(time.Now()) {
+				// TODO: RC this fails
 				refreshedTokenRec, err := refreshOAuthTokenFunc(cnsi.SkipSSLValidation, cnsiRequest.GUID, cnsiRequest.UserGUID, cnsi.ClientId, cnsi.ClientSecret, cnsi.TokenEndpoint)
 				if err != nil {
 					log.Info(err)
@@ -26,7 +29,7 @@ func (p *portalProxy) OAuthHandlerFunc(cnsiRequest *interfaces.CNSIRequest, req 
 				}
 				tokenRec = refreshedTokenRec
 			}
-			req.Header.Set("Authorization", "bearer "+tokenRec.AuthToken)
+			req.Header.Set("Authorization", "bearer "+tokenRec.AuthToken) // TODO: RC bearer/Bearer
 
 			var client http.Client
 			client = p.GetHttpClientForRequest(req, cnsi.SkipSSLValidation)

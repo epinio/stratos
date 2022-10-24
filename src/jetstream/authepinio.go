@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,6 +18,8 @@ import (
 	"github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy"
 
 	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
+
+	"github.com/epinio/ui-backend/src/jetstream/dex"
 )
 
 //More fields will be moved into here as global portalProxy struct is phased out
@@ -41,8 +44,19 @@ func (a *epinioAuth) Login(c echo.Context) error {
 		return err
 	}
 
+	authType := c.Get("auth_type").(string)
+
+	var userGUID, username string
+	var err error
+
+	switch authType {
+	case "local":
+		userGUID, username, err = a.epinioLocalLogin(c)
+	case "oidc":
+		userGUID, username, err = a.epinioOIDCLogin(c)
+	}
+
 	// Perform the login and fetch session values if successful
-	userGUID, username, err := a.epinioLogin(c)
 
 	if err != nil {
 		//Login failed, return response.
@@ -106,9 +120,9 @@ func (a *epinioAuth) VerifySession(c echo.Context, sessionUser string, sessionEx
 	return nil
 }
 
-//epinioLogin verifies local user credentials against our DB
-func (a *epinioAuth) epinioLogin(c echo.Context) (string, string, error) {
-	log.Debug("doLocalLogin")
+//epinioLocalLogin verifies local user credentials against our DB
+func (a *epinioAuth) epinioLocalLogin(c echo.Context) (string, string, error) {
+	log.Debug("epinioLocalLogin")
 
 	username, password, err := a.getRancherUsernameAndPassword(c)
 	if err != nil {
@@ -142,9 +156,28 @@ func (a *epinioAuth) getRancherUsernameAndPassword(c echo.Context) (string, stri
 		return "", username, errors.New("Username and/or password required")
 	}
 
+	// username := ec.Get("rancher_username").(string)
+	// password := ec.Get("rancher_password").(string)
+
+	// if len(username) == 0 || len(password) == 0 {
+	// 	return nil, false, errors.New("username and/or password not present in context")
+	// }
+
+	authString := fmt.Sprintf("%s:%s", username, password)
+	base64EncodedAuthString := base64.StdEncoding.EncodeToString([]byte(authString))
+
 	// Set these so they're available in the epinio plugin login
-	c.Set("rancher_username", username)
-	c.Set("rancher_password", password)
+	tr := &interfaces.TokenRecord{
+		AuthType: interfaces.AuthTypeHttpBasic,
+		// AuthType: ,
+		AuthToken:    base64EncodedAuthString,
+		RefreshToken: username,
+	}
+	c.Set("token", tr)
+
+	// Set these so they're available in the epinio plugin login
+	// c.Set("rancher_username", username)
+	// c.Set("rancher_password", password)
 
 	return username, password, nil
 }
@@ -199,6 +232,83 @@ func (a *epinioAuth) verifyEpinioCreds(username, password string) error {
 
 }
 
+// ------------------
+//epinioLocalLogin verifies local user credentials against our DB
+func (a *epinioAuth) epinioOIDCLogin(c echo.Context) (string, string, error) {
+	// TODO: RC run through this and wrap errors in correct http status code
+
+	log.Debug("epinioOIDCLogin")
+
+	defer c.Request().Body.Close()
+	body, err := ioutil.ReadAll(c.Request().Body)
+	if err != nil {
+		return "", "", err
+	}
+
+	var params rancherproxy.LoginOIDCParams
+	if err = json.Unmarshal(body, &params); err != nil {
+		return "", "", err
+	}
+
+	// TODO: RC catch missing code
+
+	log.Infof("epinioOIDCLogin: '%v'", params.Code)
+
+	// https://github.com/epinio/epinio/blob/5575038a4b06ad57fc15258854ff6f42413c6020/internal/cli/usercmd/login_oidc.go
+
+	oidcProvider, _ := dex.NewOIDCProvider(c.Request().Context(), a.p) // TODO: RC err
+	oidcProvider.AddScopes("audience:server:client_id:epinio-api")
+	token, err := oidcProvider.ExchangeWithPKCE(c.Request().Context(), params.Code, params.CodeVerifier) // TODO: RC err
+
+	if err != nil {
+		return "", "", err
+	}
+
+	log.Warnf("epinioOIDCLogin: token: %+v", token.TokenType)
+
+	tr := &interfaces.TokenRecord{
+		AuthType:     interfaces.AuthTypeDex,
+		AuthToken:    token.AccessToken,
+		RefreshToken: token.RefreshToken,
+		TokenExpiry:  token.Expiry.Unix(),
+		Metadata:     params.CodeVerifier, // This will be used for refreshing the token
+	}
+
+	log.Warnf("epinioOIDCLogin: tr: %+v", tr)
+
+	idToken, err := oidcProvider.Verify(c.Request().Context(), token.AccessToken)
+	var claims struct {
+		Email  string   `json:"email"`
+		Groups []string `json:"groups"`
+	}
+	if err := idToken.Claims(&claims); err != nil {
+		return "", "", err
+	}
+
+	log.Warnf("epinioOIDCLogin: idToken: %+v. Claims: %+v", idToken, claims)
+
+	// u, err := a.p.GetUserTokenInfo(token.AccessToken) // TODO: RC error. DOESN@T WORK, BUT SHOULD
+
+	// log.Warnf("epinioOIDCLogin: u: %+v. err: %+v", u, err)
+	// log.Warnf("epinioOIDCLogin: u.UserGUID: %+v. u.UserName: %+v", u.UserGUID, u.UserName)
+
+	// Set these so they're available in the epinio plugin login
+	c.Set("token", tr)
+
+	return claims.Email, claims.Email, nil
+
+}
+
+// func (a *epinioAuth) epinioOIDCGetTokenWithAuthCode(c echo.Context) (string, string, error) {
+// 	// swap auth code for token with deets
+// 	return "", "", nil
+// }
+
+// TODO: RC if request fails, fetch new token using refresh thingy
+// TODO: RC ensure state we sent matches state back in verify
+// TODO: RC validate token claims/scopes with required claims/scopes
+
+// ------------------
 //generateLoginSuccessResponse
 func (e *epinioAuth) generateLoginSuccessResponse(c echo.Context, userGUID, username string) error {
 	log.Debug("generateLoginSuccessResponse")

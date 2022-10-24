@@ -1,13 +1,13 @@
 package epinio
 
 import (
-	"encoding/base64"
 	"errors"
 	"fmt"
 
 	eInterfaces "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/interfaces"
 	normanProxy "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/norman"
 	steveProxy "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/steve"
+	epinio_utils "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/utils"
 
 	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 
@@ -172,38 +172,45 @@ func (epinio *Epinio) AddRootGroupRoutes(echoGroup *echo.Group) {
 	// Rancher Norman API (public)
 	normanPublicGroup := rancherProxyGroup.Group("/v3-public")
 	normanPublicGroup.Use(p.SetSecureCacheContentMiddleware)
-	normanPublicGroup.POST("/authProviders/local/login", p.GetStratosAuthService().Login)
-	// TODO: RC
-	normanPublicGroup.POST("/authProviders/keycloakoidc/login", p.GetStratosAuthService().Login)
+	normanPublicGroup.POST("/authProviders/local/login", func(c echo.Context) error {
+		c.Set("auth_type", "local")
+		return p.GetStratosAuthService().Login(c)
+	})
+	normanPublicGroup.POST("/authProviders/keycloakoidc/login", func(c echo.Context) error {
+		c.Set("auth_type", "oidc")
+		return p.GetStratosAuthService().Login(c)
+	})
 
-	normanPublicGroup.GET("/authProviders", normanProxy.GetAuthProviders)
+	normanPublicGroup.GET("/authProviders", func(c echo.Context) error {
+		return normanProxy.GetAuthProviders(c, epinio.portalProxy)
+	})
 
 }
 
-func (epinio *Epinio) findEpinioEndpoint() (*interfaces.CNSIRecord, error) {
-	endpoints, err := epinio.portalProxy.ListEndpoints()
-	if err != nil {
-		msg := "failed to fetch list of endpoints: %+v"
-		log.Errorf(msg, err)
-		return nil, fmt.Errorf(msg, err)
-	}
+// func (epinio *Epinio) findEpinioEndpoint() (*interfaces.CNSIRecord, error) {
+// 	endpoints, err := epinio.portalProxy.ListEndpoints()
+// 	if err != nil {
+// 		msg := "failed to fetch list of endpoints: %+v"
+// 		log.Errorf(msg, err)
+// 		return nil, fmt.Errorf(msg, err)
+// 	}
 
-	var epinioEndpoint *interfaces.CNSIRecord
-	for _, e := range endpoints {
-		if e.CNSIType == eInterfaces.EndpointType {
-			epinioEndpoint = e
-			break
-		}
-	}
+// 	var epinioEndpoint *interfaces.CNSIRecord
+// 	for _, e := range endpoints {
+// 		if e.CNSIType == eInterfaces.EndpointType {
+// 			epinioEndpoint = e
+// 			break
+// 		}
+// 	}
 
-	if epinioEndpoint == nil {
-		msg := "failed to find an epinio endpoint"
-		log.Error(msg)
-		return nil, fmt.Errorf(msg)
-	}
+// 	if epinioEndpoint == nil {
+// 		msg := "failed to find an epinio endpoint"
+// 		log.Error(msg)
+// 		return nil, fmt.Errorf(msg)
+// 	}
 
-	return epinioEndpoint, nil
-}
+// 	return epinioEndpoint, nil
+// }
 
 // Init performs plugin initialization
 func (epinio *Epinio) Init() error {
@@ -219,7 +226,7 @@ func (epinio *Epinio) Init() error {
 	skipSSLValidation := epinio.epinioApiUrlskipSSLValidation
 	fetchInfo := epinio.Info
 
-	if epinioCnsi, err := epinio.findEpinioEndpoint(); err == nil {
+	if epinioCnsi, err := epinio_utils.FindEpinioEndpoint(epinio.portalProxy); err == nil {
 
 		if epinioCnsi.APIEndpoint.String() == apiEndpoint && epinioCnsi.DopplerLoggingEndpoint == apiWsUrl {
 			// skip
@@ -286,6 +293,7 @@ func (epinio *Epinio) UpdateMetadata(info *interfaces.Info, userGUID string, ech
 }
 
 func (epinio *Epinio) loginHook(context echo.Context) error {
+	// TODO: RC
 	log.Infof("Determining if user should auto-connect to %s.", epinio.epinioApiUrl)
 
 	_, err := epinio.portalProxy.GetSessionStringValue(context, "user_id")
@@ -336,22 +344,48 @@ func (epinio *Epinio) logoutHook(context echo.Context) error {
 func (epinio *Epinio) Connect(ec echo.Context, cnsiRecord interfaces.CNSIRecord, userId string) (*interfaces.TokenRecord, bool, error) {
 	log.Info("Epinio Connect...")
 
-	// These are set during log in
-	username := ec.Get("rancher_username").(string)
-	password := ec.Get("rancher_password").(string)
+	token := ec.Get("token").(*interfaces.TokenRecord)
 
-	if len(username) == 0 || len(password) == 0 {
-		return nil, false, errors.New("username and/or password not present in context")
+	if token == nil {
+		return nil, false, errors.New("missing token")
 	}
 
-	authString := fmt.Sprintf("%s:%s", username, password)
-	base64EncodedAuthString := base64.StdEncoding.EncodeToString([]byte(authString))
+	return token, false, nil
 
-	tr := &interfaces.TokenRecord{
-		AuthType:     interfaces.AuthTypeHttpBasic,
-		AuthToken:    base64EncodedAuthString,
-		RefreshToken: username,
-	}
+	// // These are set during log in
+	// dex := ec.Get("dex")
 
-	return tr, false, nil
+	// // var tr &interfaces.TokenRecord = nil
+
+	// if dex != nil {
+	// 	dex_token := ec.Get("dex_token").(*interfaces.TokenRecord)
+	// 	if dex_token == nil {
+	// 		return nil, false, errors.New("token not present in context")
+	// 	}
+
+	// 	tr := &dex_token
+
+	// 	return &tr, false, nil
+
+	// } else {
+	// 	username := ec.Get("rancher_username").(string)
+	// 	password := ec.Get("rancher_password").(string)
+
+	// 	if len(username) == 0 || len(password) == 0 {
+	// 		return nil, false, errors.New("username and/or password not present in context")
+	// 	}
+
+	// 	authString := fmt.Sprintf("%s:%s", username, password)
+	// 	base64EncodedAuthString := base64.StdEncoding.EncodeToString([]byte(authString))
+
+	// 	tr := &interfaces.TokenRecord{
+	// 		AuthType: interfaces.AuthTypeHttpBasic,
+	// 		// AuthType: ,
+	// 		AuthToken:    base64EncodedAuthString,
+	// 		RefreshToken: username,
+	// 	}
+
+	// 	return tr, false, nil
+	// }
+
 }

@@ -742,6 +742,10 @@ func newPortalProxy(pc interfaces.PortalConfig, dcp *sql.DB, ss HttpSessionStore
 		Handler: pp.DoOidcFlowRequest,
 	})
 
+	pp.AddAuthProvider(interfaces.AuthTypeDex, interfaces.AuthProvider{
+		Handler: pp.DoDexFlowRequest,
+	})
+
 	var err error
 	pp.APIKeysRepository, err = apikeys.NewPgsqlAPIKeysRepository(pp.DatabaseConnectionPool)
 	if err != nil {

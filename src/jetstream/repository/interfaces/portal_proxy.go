@@ -69,6 +69,7 @@ type PortalProxy interface {
 	OAuthHandlerFunc(cnsiRequest *CNSIRequest, req *http.Request, refreshOAuthTokenFunc RefreshOAuthTokenFunc) AuthHandlerFunc
 	DoOAuthFlowRequest(cnsiRequest *CNSIRequest, req *http.Request) (*http.Response, error)
 	DoOidcFlowRequest(cnsiRequest *CNSIRequest, req *http.Request) (*http.Response, error)
+	DoDexFlowRequest(cnsiRequest *CNSIRequest, req *http.Request) (*http.Response, error)
 	GetCNSIUserFromOAuthToken(cnsiGUID string, cfTokenRecord *TokenRecord) (*ConnectedUser, bool)
 
 	// Tokens - lower-level access

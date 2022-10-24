@@ -11,8 +11,12 @@ import (
 
 // Get the available auth providers
 // /v3/authProviders
-func GetAuthProviders(ec echo.Context) error {
-	col := NewAuthProviders(ec)
+func GetAuthProviders(ec echo.Context, p jInterfaces.PortalProxy) error {
+	col, err := NewAuthProviders(ec, p)
+
+	if err != nil {
+		return err
+	}
 
 	return api.SendResponse(ec, col)
 }
