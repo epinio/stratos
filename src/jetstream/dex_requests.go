@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/epinio/ui-backend/src/jetstream/dex"
 	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
@@ -75,7 +74,11 @@ func (p *portalProxy) RefreshDexToken(ctx context.Context, skipSSLValidation boo
 		return t, fmt.Errorf("Info could not be found for user with GUID %s", userGUID)
 	}
 
-	oidcProvider, _ := dex.NewOIDCProvider(ctx, p)
+	// oidcProvider, _ := dex.NewOIDCProvider(ctx, p)
+	oidcProvider, err := p.GetDex() // TODO: RC error
+	if err != nil {
+		return t, err
+	}
 
 	oathToken := &oauth2.Token{
 		AccessToken:  userToken.AuthToken,
@@ -84,14 +87,14 @@ func (p *portalProxy) RefreshDexToken(ctx context.Context, skipSSLValidation boo
 		Expiry:       time.Unix(userToken.TokenExpiry, 0),
 	}
 
-	tokenSource := oidcProvider.Config.TokenSource(ctx, oathToken)
-	newOathToken, _ := tokenSource.Token() // TODO: err
+	tokenSource := oidcProvider.GetConfig().TokenSource(ctx, oathToken)
+	newOathToken, err := tokenSource.Token() // TODO: err
 
 	// TODO: RC err
 	// token, err := oidcProvider.ExchangeWithPKCE(ctx, userToken.RefreshToken, userToken.Metadata) // Metadata contains the code_verifier string
 
 	if err != nil {
-		return t, fmt.Errorf("Failed to exchange refresh for token: %+v", err)
+		return t, fmt.Errorf("Failed to fetch refreshed token: %+v", err)
 	}
 
 	log.Warnf("RefreshDexToken: token: %+v", newOathToken.AccessToken)
@@ -102,6 +105,11 @@ func (p *portalProxy) RefreshDexToken(ctx context.Context, skipSSLValidation boo
 		RefreshToken: newOathToken.RefreshToken,
 		TokenExpiry:  newOathToken.Expiry.Unix(),
 		Metadata:     userToken.Metadata, // This will be used for refreshing the token
+	}
+
+	_, err = oidcProvider.Verify(ctx, newOathToken.AccessToken)
+	if err != nil {
+		return t, fmt.Errorf("Failed to verify refreshed token: %+v", err)
 	}
 
 	// tokenEndpointWithPath := fmt.Sprintf("%s/oauth/token", tokenEndpoint)

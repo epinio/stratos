@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/sha1"
 	"crypto/tls"
 	"database/sql"
@@ -25,6 +26,7 @@ import (
 	"time"
 
 	"github.com/epinio/ui-backend/src/jetstream/custombinder"
+	"github.com/epinio/ui-backend/src/jetstream/dex"
 
 	"bitbucket.org/liamstask/goose/lib/goose"
 	"github.com/antonlindstrom/pgstore"
@@ -90,6 +92,8 @@ var (
 	// Clients to use typically for mutating operations - typically allow a longer request timeout
 	httpClientMutating        = http.Client{}
 	httpClientMutatingSkipSSL = http.Client{}
+	// Cached dex client
+	dexClient interfaces.OIDCProvider
 )
 
 // getEnvironmentLookup return a search path for configuration settings
@@ -1311,4 +1315,17 @@ func (portalProxy *portalProxy) SetStoreFactory(f interfaces.StoreFactory) inter
 	old := portalProxy.StoreFactory
 	portalProxy.StoreFactory = f
 	return old
+}
+
+func (p *portalProxy) GetDex() (interfaces.OIDCProvider, error) {
+	if dexClient != nil {
+		return dexClient, nil
+	}
+
+	dexClient, err := dex.NewOIDCProvider(context.Background(), p)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create dex OIDC provider: %+v", err)
+	}
+
+	return dexClient, nil
 }

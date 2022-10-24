@@ -89,4 +89,6 @@ type PortalProxy interface {
 
 	SetSecureCacheContentMiddleware(h echo.HandlerFunc) echo.HandlerFunc
 	SessionMiddleware() echo.MiddlewareFunc
+
+	GetDex() (OIDCProvider, error)
 }

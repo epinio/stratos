@@ -6,12 +6,10 @@ import (
 	eInterfaces "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/interfaces"
 	jInterfaces "github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 
-	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
-
 	log "github.com/sirupsen/logrus"
 )
 
-func FindEpinioEndpoint(p jInterfaces.PortalProxy) (*interfaces.CNSIRecord, error) {
+func FindEpinioEndpoint(p jInterfaces.PortalProxy) (*jInterfaces.CNSIRecord, error) {
 	endpoints, err := p.ListEndpoints()
 	if err != nil {
 		msg := "failed to fetch list of endpoints: %+v"
@@ -19,7 +17,7 @@ func FindEpinioEndpoint(p jInterfaces.PortalProxy) (*interfaces.CNSIRecord, erro
 		return nil, fmt.Errorf(msg, err)
 	}
 
-	var epinioEndpoint *interfaces.CNSIRecord
+	var epinioEndpoint *jInterfaces.CNSIRecord
 	for _, e := range endpoints {
 		if e.CNSIType == eInterfaces.EndpointType {
 			epinioEndpoint = e

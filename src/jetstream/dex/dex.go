@@ -37,6 +37,10 @@ type OIDCProvider struct {
 	Provider *oidc.Provider
 	Config   *oauth2.Config
 	P        jInterfaces.PortalProxy
+	// AuthCodeURLWithPKCE func() (string, string)
+	// AddScopes           func(scopes ...string)
+	// ExchangeWithPKCE    func(ctx context.Context, authCode, codeVerifier string)
+	// Verify              func(ctx context.Context, rawIDToken string) (*oidc.IDToken, error)
 }
 
 func dexUrl(p jInterfaces.PortalProxy) (string, error) {
@@ -77,7 +81,7 @@ func createContext(p jInterfaces.PortalProxy, defaultCtx context.Context) (conte
 }
 
 // NewOIDCProvider construct an OIDCProvider fetching its configuration
-func NewOIDCProvider(ctx context.Context, p jInterfaces.PortalProxy) (*OIDCProvider, error) {
+func NewOIDCProvider(ctx context.Context, p jInterfaces.PortalProxy) (jInterfaces.OIDCProvider, error) {
 	issuer, _ := dexUrl(p) // TODO: RC
 	// issuer := "http://dex.epinio.svc.cluster.local:5556"
 	// issuerUnsecure := false
@@ -87,7 +91,13 @@ func NewOIDCProvider(ctx context.Context, p jInterfaces.PortalProxy) (*OIDCProvi
 		return nil, errors.Wrap(err, "parsing the issuer URL")
 	}
 
-	return NewOIDCProviderWithEndpoint(p, ctx, issuer, false, clientID, endpoint)
+	log.Warnf("NewOIDCProvider: issuer %+v. endpoint: %+v", issuer, endpoint)
+
+	// var a jInterfaces.OIDCProvider
+	b, _ := NewOIDCProviderWithEndpoint(p, ctx, issuer, false, clientID, endpoint)
+
+	// a = b
+	return b, nil
 }
 
 // NewOIDCProviderWithEndpoint construct an OIDCProvider fetching its configuration from the endpoint URL
@@ -182,4 +192,8 @@ func (pc *OIDCProvider) Verify(ctx context.Context, rawIDToken string) (*oidc.ID
 		return nil, errors.Wrap(err, "verifying rawIDToken")
 	}
 	return token, nil
+}
+
+func (pc OIDCProvider) GetConfig() *oauth2.Config {
+	return pc.Config
 }

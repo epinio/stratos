@@ -6,7 +6,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 
-	dex "github.com/epinio/ui-backend/src/jetstream/dex"
 	"github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/interfaces"
 	jInterfaces "github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 )
@@ -44,7 +43,7 @@ func NewAuthProviders(ec echo.Context, p jInterfaces.PortalProxy) (*interfaces.C
 
 	oidc := NewAuthProvider(ec, "keycloakoidc")
 
-	oidcProvider, err := dex.NewOIDCProvider(ec.Request().Context(), p) // TODO: RC err
+	oidcProvider, err := p.GetDex()
 
 	if err != nil {
 		return nil, err

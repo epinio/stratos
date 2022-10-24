@@ -18,8 +18,6 @@ import (
 	"github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy"
 
 	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
-
-	"github.com/epinio/ui-backend/src/jetstream/dex"
 )
 
 //More fields will be moved into here as global portalProxy struct is phased out
@@ -117,6 +115,7 @@ func (a *epinioAuth) BeforeVerifySession(c echo.Context) {}
 func (a *epinioAuth) VerifySession(c echo.Context, sessionUser string, sessionExpireTime int64) error {
 	// Never expires
 	// Only really used by `/v1/auth/verify`
+	// TODO: RC if dex...
 	return nil
 }
 
@@ -126,11 +125,15 @@ func (a *epinioAuth) epinioLocalLogin(c echo.Context) (string, string, error) {
 
 	username, password, err := a.getRancherUsernameAndPassword(c)
 	if err != nil {
-		return "", "", err
+		msg := "Unable to determine Username and/or password: %+v"
+		log.Errorf(msg, err)
+		return "", "", fmt.Errorf(msg, err)
 	}
 
-	if err := a.verifyEpinioCreds(username, password); err != nil {
-		return "", "", err
+	if err := a.verifyLocalLoginCreds(username, password); err != nil {
+		msg := "Unable to verify Username and/or password: %+v"
+		log.Errorf(msg, err)
+		return "", "", fmt.Errorf(msg, err)
 	}
 
 	// User guid, user name, err
@@ -146,7 +149,7 @@ func (a *epinioAuth) getRancherUsernameAndPassword(c echo.Context) (string, stri
 
 	var params rancherproxy.LoginParams
 	if err = json.Unmarshal(body, &params); err != nil {
-		return "", "", err
+		return "", "", errors.New("Failed to parse body with username/password")
 	}
 
 	username := params.Username
@@ -182,15 +185,13 @@ func (a *epinioAuth) getRancherUsernameAndPassword(c echo.Context) (string, stri
 	return username, password, nil
 }
 
-func (a *epinioAuth) verifyEpinioCreds(username, password string) error {
+func (a *epinioAuth) verifyLocalLoginCreds(username, password string) error {
 	log.Debug("verifyEpinioCreds")
 
 	// Find the epinio endpoint
 	endpoints, err := a.p.ListEndpoints()
 	if err != nil {
-		msg := "Failed to fetch list of endpoints: %+v"
-		log.Errorf(msg, err)
-		return fmt.Errorf(msg, err)
+		return fmt.Errorf("failed to fetch list of endpoints: %+v", err)
 	}
 
 	var epinioEndpoint *interfaces.CNSIRecord
@@ -202,9 +203,7 @@ func (a *epinioAuth) verifyEpinioCreds(username, password string) error {
 	}
 
 	if epinioEndpoint == nil {
-		msg := "Failed to find an epinio endpoint"
-		log.Error(msg)
-		return fmt.Errorf(msg)
+		return fmt.Errorf("failed to find an epinio endpoint")
 	}
 
 	// Make a request to the epinio endpoint that requires auth
@@ -212,9 +211,7 @@ func (a *epinioAuth) verifyEpinioCreds(username, password string) error {
 
 	req, err := http.NewRequest("GET", credsUrl, nil)
 	if err != nil {
-		msg := "Failed to create request to verify epinio creds: %v"
-		log.Errorf(msg, err)
-		return fmt.Errorf(msg, err)
+		return fmt.Errorf("failed to create request to verify epinio creds: %v", err)
 	}
 
 	req.SetBasicAuth(username, password)
@@ -237,29 +234,38 @@ func (a *epinioAuth) verifyEpinioCreds(username, password string) error {
 func (a *epinioAuth) epinioOIDCLogin(c echo.Context) (string, string, error) {
 	// TODO: RC run through this and wrap errors in correct http status code
 
+	// TODO: RC Q what does epinio do on expirer, do they use .token / .client?
 	log.Debug("epinioOIDCLogin")
 
 	defer c.Request().Body.Close()
 	body, err := ioutil.ReadAll(c.Request().Body)
 	if err != nil {
-		return "", "", err
+		msg := "Unable to read body: %+v"
+		log.Errorf(msg, err)
+		return "", "", fmt.Errorf(msg, err)
 	}
 
 	var params rancherproxy.LoginOIDCParams
 	if err = json.Unmarshal(body, &params); err != nil {
-		return "", "", err
+		msg := "Unable to parse body: %+v"
+		log.Errorf(msg, err)
+		return "", "", fmt.Errorf(msg, err)
 	}
 
-	// TODO: RC catch missing code
-
-	log.Infof("epinioOIDCLogin: '%v'", params.Code)
+	if len(params.Code) == 0 {
+		return "", "", errors.New("Auth code required")
+	}
 
 	// https://github.com/epinio/epinio/blob/5575038a4b06ad57fc15258854ff6f42413c6020/internal/cli/usercmd/login_oidc.go
 
-	oidcProvider, _ := dex.NewOIDCProvider(c.Request().Context(), a.p) // TODO: RC err
-	oidcProvider.AddScopes("audience:server:client_id:epinio-api")
-	token, err := oidcProvider.ExchangeWithPKCE(c.Request().Context(), params.Code, params.CodeVerifier) // TODO: RC err
+	oidcProvider, err := a.p.GetDex()
 
+	if err != nil {
+		return "", "", err
+	}
+
+	oidcProvider.AddScopes("audience:server:client_id:epinio-api")                                       // TODO: RC move to GetDex?
+	token, err := oidcProvider.ExchangeWithPKCE(c.Request().Context(), params.Code, params.CodeVerifier) // TODO: RC err
 	if err != nil {
 		return "", "", err
 	}
@@ -277,6 +283,10 @@ func (a *epinioAuth) epinioOIDCLogin(c echo.Context) (string, string, error) {
 	log.Warnf("epinioOIDCLogin: tr: %+v", tr)
 
 	idToken, err := oidcProvider.Verify(c.Request().Context(), token.AccessToken)
+	if err != nil {
+		return "", "", err
+	}
+
 	var claims struct {
 		Email  string   `json:"email"`
 		Groups []string `json:"groups"`
