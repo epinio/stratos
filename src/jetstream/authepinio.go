@@ -1,10 +1,12 @@
 package main
 
-// TODO: RC validate token claims/scopes with required claims/scopes
-// TODO: RC why always grant permissions? https://github.com/dexidp/dex/issues/1197
+// TODO: RC quick review with Epinio
+// - token claims/scopes
+// - why always grant permissions? No way to tell Dex to remember user's `grant access` acceptance for ui client
+//   - https://github.com/dexidp/dex/issues/1197
+//   - https://github.com/dexidp/dex/issues/1244
 // TODO: RC add EPINIO_UI_URL to helm chart & docs
-
-// https://github.com/epinio/epinio/blob/5575038a4b06ad57fc15258854ff6f42413c6020/internal/cli/usercmd/login_oidc.go
+// TODO: RC Tidy up FE
 
 import (
 	"database/sql"

@@ -49,7 +49,7 @@ func NewAuthProviders(ec echo.Context, p jInterfaces.PortalProxy) (*interfaces.C
 		return nil, err
 	}
 
-	dexUrl, _ := oidcProvider.AuthCodeURLWithPKCE() // TODO: RC oof
+	dexUrl, _ := oidcProvider.AuthCodeURLWithPKCE() // TODO: RC ooooof
 
 	log.Warnf("NewAuthProviders: dexUrl: %+v", dexUrl)
 	// client_id := "epinio-ui"
