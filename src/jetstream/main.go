@@ -27,6 +27,7 @@ import (
 
 	"github.com/epinio/ui-backend/src/jetstream/custombinder"
 	"github.com/epinio/ui-backend/src/jetstream/dex"
+	epinio_utils "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/utils"
 
 	"bitbucket.org/liamstask/goose/lib/goose"
 	"github.com/antonlindstrom/pgstore"
@@ -1316,9 +1317,15 @@ func (p *portalProxy) GetDex() (interfaces.OIDCProvider, error) {
 		return dexClient, nil
 	}
 
-	dexClient, err := dex.NewOIDCProvider(context.Background(), p)
+	epinioCnsi, err := epinio_utils.FindEpinioEndpoint(p)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create dex OIDC provider: %+v", err)
+		return nil, fmt.Errorf("failed to find epinio endpoint for dex auth url: %+v", err)
+	}
+
+	dexClient, err := dex.NewOIDCProviderWithEndpoint(p, context.Background(), epinioCnsi.AuthorizationEndpoint, epinioCnsi.Metadata)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create dex OIDC provider: %+v", err)
 	}
 
 	return dexClient, nil

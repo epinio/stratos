@@ -15,7 +15,7 @@ type OIDCProvider interface {
 	// Config              *oauth2.Config
 	// P                   PortalProxy
 	AuthCodeURLWithPKCE() (string, string)
-	AddScopes(scopes ...string)
+	// AddScopes(scopes ...string)
 	ExchangeWithPKCE(ctx context.Context, authCode, codeVerifier string) (*oauth2.Token, error)
 	Verify(ctx context.Context, rawIDToken string) (*oidc.IDToken, error)
 

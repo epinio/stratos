@@ -52,7 +52,6 @@ func NewAuthProviders(ec echo.Context, p jInterfaces.PortalProxy) (*interfaces.C
 	dexUrl, _ := oidcProvider.AuthCodeURLWithPKCE() // TODO: RC oof
 
 	log.Warnf("NewAuthProviders: dexUrl: %+v", dexUrl)
-
 	// client_id := "epinio-ui"
 	// scope := "openid, offline_access, profile, email, groups, audience:server:client_id:epinio-api"
 	// response_type := "code"
@@ -67,7 +66,6 @@ func NewAuthProviders(ec echo.Context, p jInterfaces.PortalProxy) (*interfaces.C
 	// This is what the frontend (with a bit of parsing, see auth store redirectTo) will redirect to when the user clicks log in
 	oidc.RedirectUrl = dexUrl
 	col.Data[1] = oidc
-	// TODO: RC DEX Address replace 'epinio' with 'auth'?
 	// https://github.com/login/oauth/authorize?client_id=40099713a9fad881b5af
 
 	// https://auth.134.122.107.58.nip.io/auth?

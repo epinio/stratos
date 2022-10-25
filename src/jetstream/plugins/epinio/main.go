@@ -3,6 +3,7 @@ package epinio
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	eInterfaces "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/interfaces"
 	normanProxy "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/norman"
@@ -18,6 +19,8 @@ import (
 const (
 	epinioApiUrlEnv                  = "EPINIO_API_URL"
 	epinioApiWsUrl                   = "EPINIO_WSS_URL"
+	epinioDexAuthUrl                 = "EPINIO_DEX_AUTH_URL"
+	epinioUiUrl                      = "EPINIO_UI_URL"
 	epinioApiUrlskipSSLValidationEnv = "EPINIO_API_SKIP_SSL"
 )
 
@@ -26,6 +29,8 @@ type Epinio struct {
 	portalProxy                   interfaces.PortalProxy
 	epinioApiUrl                  string
 	epinioApiWsUrl                string
+	epinioAuthUrl                 string
+	epinioUiUrl                   string
 	epinioApiUrlskipSSLValidation bool
 }
 
@@ -36,12 +41,12 @@ func init() {
 // Init creates a new Analysis
 func Init(portalProxy interfaces.PortalProxy) (interfaces.StratosPlugin, error) {
 	if interfaces.AuthEndpointTypes[portalProxy.GetConfig().AuthEndpointType] != interfaces.Epinio {
-		return nil, fmt.Errorf("Epinio plugin requires auth endpoint type of %s", interfaces.Epinio)
+		return nil, fmt.Errorf("epinio plugin requires auth endpoint type of %s", interfaces.Epinio)
 	}
 
 	epinioApiUrlValue, _ := portalProxy.Env().Lookup(epinioApiUrlEnv)
 	if len(epinioApiUrlValue) == 0 {
-		return nil, fmt.Errorf("Failed to find Epinio API url env `%s`", epinioApiUrlEnv)
+		return nil, fmt.Errorf("failed to find Epinio API url env `%s`", epinioApiUrlEnv)
 	}
 
 	epinioApiWsUrlValue, _ := portalProxy.Env().Lookup(epinioApiWsUrl)
@@ -54,15 +59,54 @@ func Init(portalProxy interfaces.PortalProxy) (interfaces.StratosPlugin, error) 
 		epinioApiUrlskipSSLValidation = false
 	}
 
-	log.Infof("Epinio API url: '%s'. Epinio WSS url: '%s'. Skipping SSL Validation: '%+v'", epinioApiUrlValue, epinioApiWsUrlValue, epinioApiUrlskipSSLValidation)
+	epinioAuthUrlValue, _ := portalProxy.Env().Lookup(epinioDexAuthUrl)
+	if len(epinioAuthUrlValue) == 0 {
+		log.Infof("Failed to find Epinio Auth API url env `%s`", epinioDexAuthUrl)
+
+		epinioAuthUrlValue = strings.Replace(epinioApiUrlValue, "epinio.", "auth.", 1)
+
+		// dexUrl, err := dexUrl(portalProxy)
+		// if err != nil {
+		// 	log.Errorf("Failed to find fall back for epinio auth url: %+v", err)
+		// }
+		// epinioAuthUrlValue = dexUrl
+	}
+
+	epinioUiUrlValue, _ := portalProxy.Env().Lookup(epinioUiUrl)
+	if len(epinioUiUrlValue) == 0 {
+		epinioUiUrlValue = "https://localhost:8005"
+	}
+
+	log.Infof("\n"+
+		"Epinio API url: '%s'\n"+
+		"Epinio WSS url: '%s'\n"+
+		"Epinio Auth url: '%s'\n"+
+		"Epinio UI url: '%s'\n"+
+		"Skipping SSL Validation: '%+v'",
+		epinioApiUrlValue, epinioApiWsUrlValue, epinioAuthUrlValue, epinioUiUrlValue, epinioApiUrlskipSSLValidation)
 
 	return &Epinio{
 		portalProxy:                   portalProxy,
 		epinioApiUrl:                  epinioApiUrlValue,
 		epinioApiWsUrl:                epinioApiWsUrlValue,
+		epinioAuthUrl:                 epinioAuthUrlValue,
+		epinioUiUrl:                   epinioUiUrlValue,
 		epinioApiUrlskipSSLValidation: epinioApiUrlskipSSLValidation,
 	}, nil
 }
+
+// func dexUrl(p interfaces.PortalProxy) (string, error) {
+// 	// issuer := "http://dex.epinio.svc.cluster.local:5556" // TODO: RC this will be needed when deployed?
+// 	epinioCnsi, err := epinio_utils.FindEpinioEndpoint(p)
+
+// 	if err != nil {
+// 		return "", err
+// 	}
+
+// 	authUrl := epinioCnsi.APIEndpoint.String()
+// 	authUrl = strings.Replace(authUrl, "epinio.", "auth.", 1)
+// 	return authUrl, nil
+// }
 
 // MiddlewarePlugin interface
 func (epinio *Epinio) EchoMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
@@ -187,31 +231,6 @@ func (epinio *Epinio) AddRootGroupRoutes(echoGroup *echo.Group) {
 
 }
 
-// func (epinio *Epinio) findEpinioEndpoint() (*interfaces.CNSIRecord, error) {
-// 	endpoints, err := epinio.portalProxy.ListEndpoints()
-// 	if err != nil {
-// 		msg := "failed to fetch list of endpoints: %+v"
-// 		log.Errorf(msg, err)
-// 		return nil, fmt.Errorf(msg, err)
-// 	}
-
-// 	var epinioEndpoint *interfaces.CNSIRecord
-// 	for _, e := range endpoints {
-// 		if e.CNSIType == eInterfaces.EndpointType {
-// 			epinioEndpoint = e
-// 			break
-// 		}
-// 	}
-
-// 	if epinioEndpoint == nil {
-// 		msg := "failed to find an epinio endpoint"
-// 		log.Error(msg)
-// 		return nil, fmt.Errorf(msg)
-// 	}
-
-// 	return epinioEndpoint, nil
-// }
-
 // Init performs plugin initialization
 func (epinio *Epinio) Init() error {
 	// Add login hook to automatically register and connect to the Epinio instance when the user logs in
@@ -223,12 +242,13 @@ func (epinio *Epinio) Init() error {
 	cnsiName := "default" // This must match EPINIO_STANDALONE_CLUSTER_ID in front end
 	apiEndpoint := epinio.epinioApiUrl
 	apiWsUrl := epinio.epinioApiWsUrl
+	apiAuthUrl := epinio.epinioAuthUrl
 	skipSSLValidation := epinio.epinioApiUrlskipSSLValidation
 	fetchInfo := epinio.Info
 
 	if epinioCnsi, err := epinio_utils.FindEpinioEndpoint(epinio.portalProxy); err == nil {
 
-		if epinioCnsi.APIEndpoint.String() == apiEndpoint && epinioCnsi.DopplerLoggingEndpoint == apiWsUrl {
+		if epinioCnsi.APIEndpoint.String() == apiEndpoint && epinioCnsi.DopplerLoggingEndpoint == apiWsUrl && epinioCnsi.AuthorizationEndpoint == apiAuthUrl {
 			// skip
 			log.Infof("Found existing endpoint %s as \"%s\" (%s) with the same API & WS API. Skipping auto-registration", apiEndpoint, cnsiName, epinioCnsi.GUID)
 			return nil
@@ -238,7 +258,7 @@ func (epinio *Epinio) Init() error {
 
 		cnsiRepo, err := epinio.portalProxy.GetStoreFactory().EndpointStore()
 		if err != nil {
-			msg := "Unable to establish a cnsi database reference: '%v'"
+			msg := "unable to establish a cnsi database reference: '%v'"
 			log.Errorf(msg, err)
 			return fmt.Errorf(msg, err)
 		}
@@ -246,21 +266,21 @@ func (epinio *Epinio) Init() error {
 		// Delete the endpoint
 		err = cnsiRepo.Delete(epinioCnsi.GUID)
 		if err != nil {
-			msg := "Unable to delete existing epinio record: %v"
+			msg := "unable to delete existing epinio record: %v"
 			log.Errorf(msg, err)
 			return fmt.Errorf(msg, err)
 		}
 
 		tokenRepo, err := epinio.portalProxy.GetStoreFactory().TokenStore()
 		if err != nil {
-			msg := "Unable to establish a token database reference: '%v'"
+			msg := "unable to establish a token database reference: '%v'"
 			log.Errorf(msg, err)
 			return fmt.Errorf(msg, err)
 		}
 
 		err = tokenRepo.DeleteCNSITokens(epinioCnsi.GUID)
 		if err != nil {
-			msg := "Unable to delete epinio Tokens: %v"
+			msg := "unable to delete epinio Tokens: %v"
 			log.Errorf(msg, err)
 			return fmt.Errorf(msg, err)
 		}
@@ -284,6 +304,8 @@ func (epinio *Epinio) Info(apiEndpoint string, skipSSLValidation bool) (interfac
 	newCNSI := interfaces.CNSIRecord{
 		CNSIType:               eInterfaces.EndpointType,
 		DopplerLoggingEndpoint: epinio.epinioApiWsUrl,
+		AuthorizationEndpoint:  epinio.epinioAuthUrl,
+		Metadata:               epinio.epinioUiUrl,
 	}
 
 	return newCNSI, v2InfoResponse, nil
@@ -293,7 +315,6 @@ func (epinio *Epinio) UpdateMetadata(info *interfaces.Info, userGUID string, ech
 }
 
 func (epinio *Epinio) loginHook(context echo.Context) error {
-	// TODO: RC
 	log.Infof("Determining if user should auto-connect to %s.", epinio.epinioApiUrl)
 
 	_, err := epinio.portalProxy.GetSessionStringValue(context, "user_id")
