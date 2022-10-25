@@ -20,6 +20,7 @@ const (
 	// https://dexidp.io/docs/custom-scopes-claims-clients/#public-clients
 	OutOfBrowserURN = "urn:ietf:wg:oauth:2.0:oob"
 	clientID        = "epinio-ui"
+	clientSecret    = "jetstream-dex-epinio-ui" // Should match dex config for client
 )
 
 // https://github.com/epinio/epinio/blob/main/internal/dex/dex.go
@@ -81,7 +82,14 @@ func NewOIDCProvider(ctx context.Context, p jInterfaces.PortalProxy) (jInterface
 		return nil, errors.Wrap(err, "parsing the issuer URL")
 	}
 
-	return NewOIDCProviderWithEndpoint(p, ctx, issuer, false, clientID, endpoint)
+	oidcProvider, err := NewOIDCProviderWithEndpoint(p, ctx, issuer, false, clientID, endpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	oidcProvider.AddScopes("audience:server:client_id:epinio-api")
+
+	return oidcProvider, nil
 }
 
 // NewOIDCProviderWithEndpoint construct an OIDCProvider fetching its configuration from the endpoint URL
@@ -109,11 +117,11 @@ func NewOIDCProviderWithEndpoint(p jInterfaces.PortalProxy, ctx context.Context,
 	}
 
 	config := &oauth2.Config{
-		Endpoint: provider.Endpoint(),
-		ClientID: clientID,
-		// TODO: RC secret
-		RedirectURL: "https://localhost:8005/verify-auth", // TODO: RC
-		Scopes:      DefaultScopes,
+		Endpoint:     provider.Endpoint(),
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		RedirectURL:  "https://localhost:8005/verify-auth", // TODO: RC
+		Scopes:       DefaultScopes,
 	}
 
 	return &OIDCProvider{

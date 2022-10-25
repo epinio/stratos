@@ -221,20 +221,20 @@ func (a *epinioAuth) epinioOIDCLogin(c echo.Context) (string, string, error) {
 	defer c.Request().Body.Close()
 	body, err := ioutil.ReadAll(c.Request().Body)
 	if err != nil {
-		msg := "Unable to read body: %+v"
+		msg := "unable to read body: %+v"
 		log.Errorf(msg, err)
 		return "", "", fmt.Errorf(msg, err)
 	}
 
 	var params rancherproxy.LoginOIDCParams
 	if err = json.Unmarshal(body, &params); err != nil {
-		msg := "Unable to parse body: %+v"
+		msg := "unable to parse body: %+v"
 		log.Errorf(msg, err)
 		return "", "", fmt.Errorf(msg, err)
 	}
 
 	if len(params.Code) == 0 {
-		return "", "", errors.New("Auth code required")
+		return "", "", errors.New("auth code required")
 	}
 
 	oidcProvider, err := a.p.GetDex()
@@ -243,11 +243,9 @@ func (a *epinioAuth) epinioOIDCLogin(c echo.Context) (string, string, error) {
 		return "", "", err
 	}
 
-	// TODO: RC move to GetDex?
-	oidcProvider.AddScopes("audience:server:client_id:epinio-api")
 	token, err := oidcProvider.ExchangeWithPKCE(c.Request().Context(), params.Code, params.CodeVerifier)
 	if err != nil {
-		msg := "Failed to get token from code: %+v"
+		msg := "failed to get token from code: %+v"
 		log.Errorf(msg, err)
 		return "", "", fmt.Errorf(msg, err)
 	}
@@ -262,7 +260,7 @@ func (a *epinioAuth) epinioOIDCLogin(c echo.Context) (string, string, error) {
 
 	idToken, err := oidcProvider.Verify(c.Request().Context(), token.AccessToken)
 	if err != nil {
-		msg := "Failed to verify fetched token: %+v"
+		msg := "failed to verify fetched token: %+v"
 		log.Errorf(msg, err)
 		return "", "", fmt.Errorf(msg, err)
 	}
@@ -272,7 +270,7 @@ func (a *epinioAuth) epinioOIDCLogin(c echo.Context) (string, string, error) {
 		Groups []string `json:"groups"`
 	}
 	if err := idToken.Claims(&claims); err != nil {
-		msg := "Token in unexpected format: %+v"
+		msg := "token in unexpected format: %+v"
 		log.Errorf(msg, err)
 		return "", "", fmt.Errorf(msg, err)
 	}

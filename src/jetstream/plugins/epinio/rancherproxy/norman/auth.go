@@ -49,8 +49,6 @@ func NewAuthProviders(ec echo.Context, p jInterfaces.PortalProxy) (*interfaces.C
 		return nil, err
 	}
 
-	oidcProvider.AddScopes("audience:server:client_id:epinio-api")
-
 	dexUrl, _ := oidcProvider.AuthCodeURLWithPKCE() // TODO: RC oof
 
 	log.Warnf("NewAuthProviders: dexUrl: %+v", dexUrl)

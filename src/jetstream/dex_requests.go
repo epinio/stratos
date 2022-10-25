@@ -36,6 +36,7 @@ func (p *portalProxy) RefreshDexToken(ctx context.Context, skipSSLValidation boo
 		return t, fmt.Errorf("failed to get dex client: %+v", err)
 	}
 
+	// Convert out token into oauth2 token
 	oathToken := &oauth2.Token{
 		AccessToken:  userToken.AuthToken,
 		TokenType:    "Bearer",
@@ -43,6 +44,7 @@ func (p *portalProxy) RefreshDexToken(ctx context.Context, skipSSLValidation boo
 		Expiry:       time.Unix(userToken.TokenExpiry, 0),
 	}
 
+	// Get new token (we could dump OAuthHandlerFunc above and just use this plus `Request` part)
 	tokenSource := oidcProvider.GetConfig().TokenSource(ctx, oathToken)
 	newOathToken, err := tokenSource.Token()
 	if err != nil {
@@ -57,15 +59,9 @@ func (p *portalProxy) RefreshDexToken(ctx context.Context, skipSSLValidation boo
 		Metadata:     userToken.Metadata, // This will be used for refreshing the token
 	}
 
-	// TODO: RC not needed....
-	// _, err = oidcProvider.Verify(ctx, newOathToken.AccessToken)
-	// if err != nil {
-	// 	return t, fmt.Errorf("Failed to verify refreshed token: %+v", err)
-	// }
-
 	err = p.setCNSITokenRecord(cnsiGUID, userGUID, *tokenRecord)
 	if err != nil {
-		return t, fmt.Errorf("Couldn't save new token: %v", err)
+		return t, fmt.Errorf("couldn't save new token: %v", err)
 	}
 
 	return *tokenRecord, nil
