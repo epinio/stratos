@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	epinioDex "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/dex"
 	eInterfaces "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/interfaces"
 	normanProxy "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/norman"
 	steveProxy "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/rancherproxy/steve"
@@ -229,6 +230,14 @@ func (epinio *Epinio) AddRootGroupRoutes(echoGroup *echo.Group) {
 		return normanProxy.GetAuthProviders(c, epinio.portalProxy)
 	})
 
+	// Dex (public)
+	dexGroup := rancherProxyGroup.Group("/dex")
+	dexGroup.Use(p.SetSecureCacheContentMiddleware)
+
+	dexGroup.GET("/redirectUrl", func(c echo.Context) error {
+		return epinioDex.RedirectUrl(c, epinio.portalProxy)
+	})
+
 }
 
 // Init performs plugin initialization
@@ -372,41 +381,4 @@ func (epinio *Epinio) Connect(ec echo.Context, cnsiRecord interfaces.CNSIRecord,
 	}
 
 	return token, false, nil
-
-	// // These are set during log in
-	// dex := ec.Get("dex")
-
-	// // var tr &interfaces.TokenRecord = nil
-
-	// if dex != nil {
-	// 	dex_token := ec.Get("dex_token").(*interfaces.TokenRecord)
-	// 	if dex_token == nil {
-	// 		return nil, false, errors.New("token not present in context")
-	// 	}
-
-	// 	tr := &dex_token
-
-	// 	return &tr, false, nil
-
-	// } else {
-	// 	username := ec.Get("rancher_username").(string)
-	// 	password := ec.Get("rancher_password").(string)
-
-	// 	if len(username) == 0 || len(password) == 0 {
-	// 		return nil, false, errors.New("username and/or password not present in context")
-	// 	}
-
-	// 	authString := fmt.Sprintf("%s:%s", username, password)
-	// 	base64EncodedAuthString := base64.StdEncoding.EncodeToString([]byte(authString))
-
-	// 	tr := &interfaces.TokenRecord{
-	// 		AuthType: interfaces.AuthTypeHttpBasic,
-	// 		// AuthType: ,
-	// 		AuthToken:    base64EncodedAuthString,
-	// 		RefreshToken: username,
-	// 	}
-
-	// 	return tr, false, nil
-	// }
-
 }
