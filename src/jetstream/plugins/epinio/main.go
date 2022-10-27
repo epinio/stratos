@@ -65,12 +65,6 @@ func Init(portalProxy interfaces.PortalProxy) (interfaces.StratosPlugin, error) 
 		log.Infof("Failed to find Epinio Auth API url env `%s`", epinioDexAuthUrl)
 
 		epinioAuthUrlValue = strings.Replace(epinioApiUrlValue, "epinio.", "auth.", 1)
-
-		// dexUrl, err := dexUrl(portalProxy)
-		// if err != nil {
-		// 	log.Errorf("Failed to find fall back for epinio auth url: %+v", err)
-		// }
-		// epinioAuthUrlValue = dexUrl
 	}
 
 	epinioUiUrlValue, _ := portalProxy.Env().Lookup(epinioUiUrl)
@@ -95,19 +89,6 @@ func Init(portalProxy interfaces.PortalProxy) (interfaces.StratosPlugin, error) 
 		epinioApiUrlskipSSLValidation: epinioApiUrlskipSSLValidation,
 	}, nil
 }
-
-// func dexUrl(p interfaces.PortalProxy) (string, error) {
-// 	// issuer := "http://dex.epinio.svc.cluster.local:5556" // TODO: RC this will be needed when deployed?
-// 	epinioCnsi, err := epinio_utils.FindEpinioEndpoint(p)
-
-// 	if err != nil {
-// 		return "", err
-// 	}
-
-// 	authUrl := epinioCnsi.APIEndpoint.String()
-// 	authUrl = strings.Replace(authUrl, "epinio.", "auth.", 1)
-// 	return authUrl, nil
-// }
 
 // MiddlewarePlugin interface
 func (epinio *Epinio) EchoMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
@@ -221,7 +202,7 @@ func (epinio *Epinio) AddRootGroupRoutes(echoGroup *echo.Group) {
 		c.Set("auth_type", "local")
 		return p.GetStratosAuthService().Login(c)
 	})
-	normanPublicGroup.POST("/authProviders/keycloakoidc/login", func(c echo.Context) error {
+	normanPublicGroup.POST("/authProviders/"+normanProxy.RancherEpinioAuthProvider+"/login", func(c echo.Context) error {
 		c.Set("auth_type", "oidc")
 		return p.GetStratosAuthService().Login(c)
 	})

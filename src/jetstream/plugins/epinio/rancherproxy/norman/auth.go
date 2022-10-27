@@ -9,6 +9,10 @@ import (
 	jInterfaces "github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 )
 
+const (
+	RancherEpinioAuthProvider = "epinio"
+)
+
 func NewAuthProvider(ec echo.Context, id string) interfaces.AuthProvider {
 
 	typ := fmt.Sprintf("%sProvider", id)
@@ -41,7 +45,7 @@ func NewAuthProviders(ec echo.Context, p jInterfaces.PortalProxy) (*interfaces.C
 	col.Data[0] = NewAuthProvider(ec, "local")
 
 	// Note - The auth provider `RedirectUrl` is not created here (it needs to be unique per request)
-	col.Data[1] = NewAuthProvider(ec, "epinio")
+	col.Data[1] = NewAuthProvider(ec, RancherEpinioAuthProvider)
 
 	return &col, nil
 }

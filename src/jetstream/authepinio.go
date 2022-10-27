@@ -7,6 +7,7 @@ package main
 //   - https://github.com/dexidp/dex/issues/1244
 // TODO: RC add EPINIO_UI_URL to helm chart & docs
 // TODO: RC Tidy up FE
+// TODO: RC set default ui url to api url
 
 import (
 	"database/sql"

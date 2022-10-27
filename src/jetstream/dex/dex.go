@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/dchest/uniuri"
 	"github.com/labstack/gommon/log"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
@@ -108,8 +107,7 @@ func NewOIDCProviderWithEndpoint(p jInterfaces.PortalProxy, ctx context.Context,
 // AuthCodeURLWithPKCE will return an URL that can be used to obtain an auth code, and a code_verifier string.
 // The code_verifier is needed to implement the PKCE auth flow, since this is going to be used by our CLI
 // Ref: https://www.oauth.com/oauth2-servers/pkce/
-func (pc *OIDCProvider) AuthCodeURLWithPKCE() (string, string) {
-	state := uniuri.NewLen(32)
+func (pc *OIDCProvider) AuthCodeURLWithPKCE(state string) (string, string) {
 	codeVerifier := NewCodeVerifier()
 
 	authCodeURL := pc.Config.AuthCodeURL(
