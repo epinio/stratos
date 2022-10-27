@@ -20,8 +20,6 @@ npm run build-backend
 ```
 cd src/jetstream
 EPINIO_API_URL=<epinio API URL> /
-EPINIO_API_URL=<epinio http/s API URL> /
-EPINIO_WSS_URL=<epinio wss API URL> /
 EPINIO_API_SKIP_SSL=<true|false> /
 EPINIO_VERSION=dev /
 AUTH_ENDPOINT_TYPE=epinio /
