@@ -9,13 +9,7 @@ import (
 
 // OIDCProvider wraps an oidc.Provider and its Configuration
 type OIDCProvider interface {
-	// Issuer              string
-	// Endpoint            *url.URL
-	// Provider            *oidc.Provider
-	// Config              *oauth2.Config
-	// P                   PortalProxy
 	AuthCodeURLWithPKCE(state string) (string, string)
-	// AddScopes(scopes ...string) // TODO: RC
 	ExchangeWithPKCE(ctx context.Context, authCode, codeVerifier string) (*oauth2.Token, error)
 	Verify(ctx context.Context, rawIDToken string) (*oidc.IDToken, error)
 

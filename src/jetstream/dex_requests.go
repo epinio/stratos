@@ -24,8 +24,6 @@ func (p *portalProxy) DoDexFlowRequest(cnsiRequest *interfaces.CNSIRequest, req 
 func (p *portalProxy) RefreshDexToken(ctx context.Context, skipSSLValidation bool, cnsiGUID, userGUID, client, clientSecret, tokenEndpoint string) (t interfaces.TokenRecord, err error) {
 	log.Debug("RefreshDexToken")
 
-	// TODO: RC test before committing
-
 	userToken, ok := p.GetCNSITokenRecordWithDisconnected(cnsiGUID, userGUID)
 	if !ok {
 		return t, fmt.Errorf("info could not be found for user with GUID %s", userGUID)

@@ -1,14 +1,5 @@
 package main
 
-// TODO: RC quick review with Epinio
-// - token claims/scopes
-// - why always grant permissions? No way to tell Dex to remember user's `grant access` acceptance for ui client
-//   - https://github.com/dexidp/dex/issues/1197
-//   - https://github.com/dexidp/dex/issues/1244
-// TODO: RC add EPINIO_UI_URL to helm chart & docs
-// TODO: RC Tidy up FE
-// TODO: RC set default ui url to api url
-
 import (
 	"database/sql"
 	"encoding/base64"

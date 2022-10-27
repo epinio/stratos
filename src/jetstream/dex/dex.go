@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/labstack/gommon/log"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 
@@ -22,7 +21,6 @@ const (
 )
 
 var (
-	// Other scopes, such as "groups" can be requested.
 	DefaultScopes = []string{oidc.ScopeOpenID, oidc.ScopeOfflineAccess, "profile", "email", "groups", "audience:server:client_id:epinio-api"}
 )
 
@@ -75,17 +73,10 @@ func NewOIDCProviderWithEndpoint(p jInterfaces.PortalProxy, ctx context.Context,
 	}
 
 	lastIndex := len(uiUrl) - 1
-	// lastChar := uiUrl[length-1:]
 	safeUiUrl := uiUrl
 	if lastIndex == strings.LastIndex(uiUrl, "/") {
-		// safeUiUrl = uiUrl[:lastIndex] + strings.Replace(uiUrl[lastIndex:], "/", "", 1)
-		// safeUiUrl = uiUrl[:lastIndex] + strings.Replace(uiUrl[lastIndex:], "/", "", 1)
 		safeUiUrl = uiUrl[:lastIndex]
 	}
-
-	// i :=
-
-	log.Warnf("NewOIDCProviderWithEndpoint: safeUiUrl: %+v", safeUiUrl)
 
 	config := &oauth2.Config{
 		Endpoint:     provider.Endpoint(),
@@ -119,11 +110,6 @@ func (pc *OIDCProvider) AuthCodeURLWithPKCE(state string) (string, string) {
 
 	return authCodeURL, codeVerifier.Value
 }
-
-// AddScopes will add scopes to the OIDCProvider.Config.Scopes, extending the DefaultScopes
-// func (pc *OIDCProvider) AddScopes(scopes ...string) {
-// 	pc.Config.Scopes = append(pc.Config.Scopes, scopes...)
-// }
 
 // ExchangeWithPKCE will exchange the authCode with a token, checking if the codeVerifier is valid
 func (pc *OIDCProvider) ExchangeWithPKCE(ctx context.Context, authCode, codeVerifier string) (*oauth2.Token, error) {
