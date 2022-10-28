@@ -32,7 +32,6 @@ func RedirectUrl(ec echo.Context, p jInterfaces.PortalProxy) error {
 			http.StatusInternalServerError,
 			"Invalid request, `state` required",
 			"Invalid request, `state` required",
-			state,
 		)
 	}
 
