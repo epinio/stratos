@@ -162,8 +162,7 @@ func (a *epinioAuth) getRancherUsernameAndPassword(c echo.Context) (string, stri
 
 	// Set these so they're available in the epinio plugin login
 	tr := &interfaces.TokenRecord{
-		AuthType: interfaces.AuthTypeHttpBasic,
-		// AuthType: ,
+		AuthType:     interfaces.AuthTypeHttpBasic,
 		AuthToken:    base64EncodedAuthString,
 		RefreshToken: username,
 	}
