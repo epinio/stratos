@@ -26,9 +26,21 @@ builds:
       # - darwin
       # - windows
     goarch:
-      - amd64
-      # - arm64
+      # - amd64
+      - arm64
       # - arm
+    # goarm:
+    #   - "7"
+    env:
+      - CC=aarch64-linux-gnu-gcc	
+      # - CC=arm-linux-gnueabihf-gcc
+      - CXX=aarch64-linux-gnu-g++	
+      # - CXX=arm-linux-gnueabihf-g++
+      - CGO_CFLAGS=--sysroot=/sysroot/linux/armhf
+      - CGO_LDFLAGS=--sysroot=/sysroot/linux/armhf
+      - PKG_CONFIG_SYSROOT_DIR=/sysroot/linux/armhf
+      - PKG_CONFIG_PATH=/sysroot/linux/armhf/opt/vc/lib/pkgconfig:/sysroot/linux/armhf/usr/lib/arm-linux-gnueabihf/pkgconfig:/sysroot/linux/armhf/usr/lib/pkgconfig:/sysroot/linux/armhf/usr/local/lib/pkgconfig
+
 
 changelog:
   skip: false
@@ -45,7 +57,8 @@ dockers:
     goos: linux
 
     # GOARCH of the built binaries/packages that should be used.
-    goarch: amd64
+    goarch: arm64
+    # goarm:  "7"
 
     # IDs to filter the binaries/packages.
     ids:
@@ -62,7 +75,7 @@ dockers:
     # Path to the Dockerfile (from the project root).
     dockerfile: Dockerfile
 
-    use: docker
+    use: buildx
 
     # Template of the docker build flags.
     build_flag_templates:
@@ -74,7 +87,7 @@ dockers:
     - "--label=epinio.io.ui.source={{.Env.UI_BUNDLE_URL}}"
     - "--label=org.opencontainers.image.source=https://github.com/epinio/ui-backend"
     - "--build-arg=DIST_BINARY=epinio-ui"
-    - "--platform=linux/amd64"
+    # - "--platform=linux/arm64"
 
     # If your Dockerfile copies files other than binaries and packages,
     # you should list them here as well.
@@ -87,3 +100,11 @@ dockers:
     # and use wildcards when you `COPY`/`ADD` in your Dockerfile.
     extra_files:
     - ui/
+
+# docker run -it \
+#   -v $(pwd):/go/src/ui-backend \
+#   -v /var/run/docker.sock:/var/run/docker.sock \
+#   -w /go/src/ui-backend \
+#   -e CGO_ENABLED=1 \
+#   -e UI_BUNDLE_URL=dev \
+#   goreleaser/goreleaser-cross:v1.19.3 --snapshot --rm-dist

@@ -7,6 +7,7 @@
     "build-backend": "./build/bk-build.sh",
     "fetch-backend-deps": "./build/bk-fetch-deps.sh",
     "test-backend": "./build/bk-build.sh test",
+    "lint-backend": "cd ./src/jetstream && go vet ./...",
     "store-git-metadata": "node build/store-git-metadata.js",
     "postinstall": "npm run dev-setup && npm run store-git-metadata",
     "dev-setup": "node build/dev-setup.js"
