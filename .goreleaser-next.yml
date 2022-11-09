@@ -92,6 +92,7 @@ dockers:
     - "--label=epinio.io.ui.source={{.Env.UI_BUNDLE_URL}}"
     - "--label=org.opencontainers.image.source=https://github.com/epinio/ui-backend"
     - "--build-arg=DIST_BINARY=epinio-ui"
+    - "--platform=linux/amd64"
 
     extra_files:
     - ui/
@@ -106,8 +107,8 @@ dockers:
     - epinio-ui-arm64
 
     image_templates:
-    - "ghcr.io/epinio/epinio-ui:{{ .Version }}-arm64"
-    - "ghcr.io/epinio/epinio-ui:latest-next-arm64"
+    - "ghcr.io/epinio/epinio-ui:{{ .Version }}-arm64v8"
+    - "ghcr.io/epinio/epinio-ui:latest-next-arm64v8"
 
     build_flag_templates:
     - "--pull"
@@ -118,6 +119,7 @@ dockers:
     - "--label=epinio.io.ui.source={{.Env.UI_BUNDLE_URL}}"
     - "--label=org.opencontainers.image.source=https://github.com/epinio/ui-backend"
     - "--build-arg=DIST_BINARY=epinio-ui"
+    - "--platform=linux/arm64/v8"
 
     extra_files:
     - ui/
@@ -145,6 +147,7 @@ dockers:
     - "--label=epinio.io.ui.source={{.Env.UI_BUNDLE_URL}}"
     - "--label=org.opencontainers.image.source=https://github.com/epinio/ui-backend"
     - "--build-arg=DIST_BINARY=epinio-ui"
+    - "--platform=linux/arm/v7"
 
     extra_files:
     - ui/
