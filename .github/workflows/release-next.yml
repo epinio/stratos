@@ -1,4 +1,4 @@
-name: Release Next"
+name: Release Next
 
 on:
   workflow_dispatch:
@@ -13,8 +13,7 @@ permissions:
   packages: write
 
 env:
-  # change this to embed a different UI dashboard
-  UI_BUNDLE_URL: https://github.com/rancher/dashboard/releases/download/epinio-standalone-v1.2.0.0.0.1/rancher-dashboard-epinio-standalone-embed.tar.gz
+  SETUP_GO_VERSION: '1.18'
 
 jobs:
   release:
@@ -30,7 +29,12 @@ jobs:
         name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: '1.18'
+          go-version: ${{ env.SETUP_GO_VERSION }}
+      -
+        name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -41,15 +45,48 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      # if the ui_bundle_url is defined download and unpack the dashboard
       -
         name: Download dashboard
+        if: ${{ github.events.inputs.ui_bundle_url != '' }}
         run: |
           mkdir ui
-          wget "${{ env.UI_BUNDLE_URL }}"
+          wget "${{ github.events.inputs.ui_bundle_url }}"
           tar xfz *.tar.gz -C ui
+
+      # otherwise fetch and build the latest dashboard from the repository
+      -
+        name: Checkout Rancher Dashboard UI
+        if: ${{ github.events.inputs.ui_bundle_url == '' }}
+        uses: actions/checkout@v2
+        with:
+          repository: rancher/dashboard
+          ref: epinio-dev
+          submodules: recursive
+          fetch-depth: 0
+      -
+        name: Build Epinio dashboard
+        if: ${{ github.events.inputs.ui_bundle_url == '' }}
+        run: |
+          pushd dashboard
+          ./.github/workflows/scripts/build-dashboard.sh
+          mv $OUTPUT_DIR/$ARTIFACT_NAME ../ui
+          popd
+          rm -rf dashboard
+        env:
+          RANCHER_ENV: epinio
+          EXCLUDES_PKG: rancher-components,harvester
+          EXCLUDES_NUXT_PLUGINS: plugins/plugin,plugins/version
+          OUTPUT_DIR: dist
+          RELEASE_DIR: release
+          ARTIFACT_NAME: rancher-dashboard-epinio-standalone-embed
+
+      #################
+
       -
         name: Run GoReleaser Cross
         run: ./build/bk-release.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          UI_BUNDLE_URL: "${{ github.events.inputs.ui_bundle_url || env.UI_BUNDLE_URL }}"
+          UI_BUNDLE_URL: "${{ github.events.inputs.ui_bundle_url || 'dev' }}"
