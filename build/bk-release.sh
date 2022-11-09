@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-docker run -it \
+docker run \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v $(pwd):/go/src/ui-backend \
     -w /go/src/ui-backend \
