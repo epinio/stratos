@@ -28,8 +28,8 @@ builds:
     goarch:
       - amd64
     env:
-      - CC=gcc
-      - CXX=g++
+      - CC=x86_64-linux-gnu-gcc
+      - CXX=x86_64-linux-gnu-g++
 
   # arm64
   - id: epinio-ui-arm64
