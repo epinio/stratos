@@ -35,11 +35,11 @@ go env
 if [ "${ACTION}" == "build" ]; then
   echo "Building backend ..."
   echo "Building version: ${VERSION}"
-  GO111MODULE=on go build -ldflags -X=main.appVersion=${VERSION}
+  go build -ldflags -X=main.appVersion=${VERSION}
   echo "Build complete ..."
 else
   echo "Running backend tests ..."
-  GO111MODULE=on go test ./... -v -count=1 -coverprofile=coverage.txt -covermode=atomic
+  go test ./... -v -count=1 -coverprofile=coverage.txt -covermode=atomic
 fi
 
 popd > /dev/null
