@@ -53,7 +53,7 @@ jobs:
         run: echo ::set-output name=TAG::${GITHUB_REF/refs\/tags\//}
       -
         name: Run GoReleaser Cross
-        run: ./build/bk-release.sh
+        run: npm run release-backend-next
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           UI_BUNDLE_URL: "${{ github.events.inputs.ui_bundle_url || env.UI_BUNDLE_URL }}"
