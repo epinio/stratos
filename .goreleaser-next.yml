@@ -45,21 +45,6 @@ builds:
       - CC=aarch64-linux-gnu-gcc
       - CXX=aarch64-linux-gnu-g++
   
-  # armv7
-  - id: epinio-ui-arm
-    dir: src/jetstream
-    binary: epinio-ui
-    ldflags:
-      - -w -s -X "main.appVersion={{ .Version }}"
-    goos:
-      - linux
-    goarch:
-      - arm
-    goarm:
-      - "7"
-    env:
-      - CC=arm-linux-gnueabihf-gcc
-      - CXX=arm-linux-gnueabihf-g++
 
 changelog:
   skip: false
@@ -120,34 +105,6 @@ dockers:
     - "--label=org.opencontainers.image.source=https://github.com/epinio/ui-backend"
     - "--build-arg=DIST_BINARY=epinio-ui"
     - "--platform=linux/arm64/v8"
-
-    extra_files:
-    - ui/
-
-  # armv7
-  - id: epinio-ui-arm
-    goos: linux
-    goarch: arm
-    goarm: "7"
-    use: buildx
-
-    ids:
-    - epinio-ui-arm
-
-    image_templates:
-    - "ghcr.io/epinio/epinio-ui:{{ .Version }}-armv7"
-    - "ghcr.io/epinio/epinio-ui:latest-next-armv7"
-
-    build_flag_templates:
-    - "--pull"
-    - "--label=org.opencontainers.image.created={{.Date}}"
-    - "--label=org.opencontainers.image.title={{.ProjectName}}"
-    - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-    - "--label=org.opencontainers.image.version={{.Version}}"
-    - "--label=epinio.io.ui.source={{.Env.UI_BUNDLE_URL}}"
-    - "--label=org.opencontainers.image.source=https://github.com/epinio/ui-backend"
-    - "--build-arg=DIST_BINARY=epinio-ui"
-    - "--platform=linux/arm/v7"
 
     extra_files:
     - ui/
