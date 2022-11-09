@@ -27,7 +27,7 @@ jobs:
           go-version: '1.18'
 
       - name: Lint
-        run: npm run test-backend
+        run: cd src/jetstream && go vet ./...
 
       - name: Unit Tests
-        run: npm run lint-backend
+        run: cd src/jetstream && go test -v ./...
