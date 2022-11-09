@@ -48,10 +48,6 @@ jobs:
           wget "${{ env.UI_BUNDLE_URL }}"
           tar xfz *.tar.gz -C ui
       -
-        name: Get current tag
-        id: get_tag
-        run: echo ::set-output name=TAG::${GITHUB_REF/refs\/tags\//}
-      -
         name: Run GoReleaser Cross
         run: ./build/bk-release.sh
         env:
