@@ -2,7 +2,9 @@
 
 set -euo pipefail
 
+# the user is set to avoid permission issue during the creation of the 'dist' folder
 docker run \
+    --user $(id -u):$(getent group docker | cut -d: -f3) \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v $(pwd):/go/src/ui-backend \
     -w /go/src/ui-backend \
