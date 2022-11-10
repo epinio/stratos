@@ -17,7 +17,7 @@ env:
   SETUP_NODE_VERSION: '16'
 
 jobs:
-  release:
+  release-next:
     runs-on: self-hosted
     steps:
       -
@@ -53,16 +53,16 @@ jobs:
       # if the ui_bundle_url is defined download and unpack the dashboard
       -
         name: Download dashboard
-        if: ${{ github.events.inputs.ui_bundle_url != '' }}
+        if: ${{ github.event.inputs.ui_bundle_url != '' }}
         run: |
           mkdir ui
-          wget "${{ github.events.inputs.ui_bundle_url }}"
+          wget "${{ github.event.inputs.ui_bundle_url }}"
           tar xfz *.tar.gz -C ui
 
       # otherwise fetch and build the latest dashboard from the repository
       -
         name: Checkout Rancher Dashboard UI
-        if: ${{ github.events.inputs.ui_bundle_url == '' }}
+        if: ${{ github.event.inputs.ui_bundle_url == '' }}
         uses: actions/checkout@v2
         with:
           repository: rancher/dashboard
@@ -72,7 +72,7 @@ jobs:
           path: dashboard
       -
         name: Build Epinio dashboard
-        if: ${{ github.events.inputs.ui_bundle_url == '' }}
+        if: ${{ github.event.inputs.ui_bundle_url == '' }}
         run: |
           pushd dashboard
           ./.github/workflows/scripts/build-dashboard.sh
@@ -94,4 +94,4 @@ jobs:
         run: ./build/bk-release.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          UI_BUNDLE_URL: "${{ github.events.inputs.ui_bundle_url || 'dev' }}"
+          UI_BUNDLE_URL: "${{ github.event.inputs.ui_bundle_url || 'dev' }}"
