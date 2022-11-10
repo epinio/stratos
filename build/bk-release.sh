@@ -2,7 +2,8 @@
 
 set -euo pipefail
 
-# the user is set to avoid permission issue during the creation of the 'dist' folder
+# the user is set to avoid permission issue during the creation of the 'dist' folder.
+# It has to be also into the docker group or it won't be able to use /var/run/docker.sock.
 docker run \
     --user $(id -u):$(getent group docker | cut -d: -f3) \
     -v /var/run/docker.sock:/var/run/docker.sock \
