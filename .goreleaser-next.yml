@@ -16,7 +16,7 @@ before:
 
 # binary builds
 builds:
-  
+
   # amd64
   - id: epinio-ui-amd64
     dir: src/jetstream
