@@ -6,7 +6,7 @@ on:
       ui_bundle_url:
         description: "ui_bundle_url"
         required: false
-        default: ""
+        type: string
 
 permissions:
   contents: write
