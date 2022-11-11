@@ -17,6 +17,8 @@ before:
 release:
   disable: true
 
+dist: /tmp/_dist
+
 # binary builds
 builds:
 
@@ -114,7 +116,7 @@ dockers:
 
 docker_manifests:
   - id: epinio-ui
-    name_template: "ghcr.io/epinio/epinio-ui:latest-next-arm64v8"
+    name_template: "ghcr.io/epinio/epinio-ui:latest-next"
 
     image_templates:
     - ghcr.io/epinio/epinio-ui:{{ incminor .Version }}-next-amd64
