@@ -14,6 +14,9 @@ before:
   hooks:
     - sh -c "cd src/jetstream && go mod download"
 
+release:
+  disable: true
+
 # binary builds
 builds:
 
@@ -108,3 +111,11 @@ dockers:
 
     extra_files:
     - ui/
+
+docker_manifests:
+  - id: epinio-ui
+    name_template: "ghcr.io/epinio/epinio-ui:latest-next-arm64v8"
+
+    image_templates:
+    - ghcr.io/epinio/epinio-ui:{{ .Version }}-amd64
+    - ghcr.io/epinio/epinio-ui:{{ .Version }}-arm64v8

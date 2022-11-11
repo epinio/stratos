@@ -1,6 +1,8 @@
 name: Release Next
 
 on:
+  schedule:
+    - cron:  '0 1 * * *'
   workflow_dispatch:
     inputs:
       ui_bundle_url:
@@ -91,7 +93,7 @@ jobs:
 
       -
         name: Run GoReleaser Cross
-        run: ./build/bk-release.sh
+        run: ./build/bk-release.sh release --rm-dist -f .goreleaser-next.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           UI_BUNDLE_URL: "${{ github.event.inputs.ui_bundle_url || 'dev' }}"

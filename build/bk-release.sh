@@ -12,5 +12,4 @@ docker run \
     -e HOME=/go \
     -e CGO_ENABLED=1 \
     -e UI_BUNDLE_URL=$UI_BUNDLE_URL \
-    goreleaser/goreleaser-cross:v1.19.3 -f .goreleaser-next.yml \
-        --snapshot --rm-dist
+    goreleaser/goreleaser-cross:v1.19.3 $@
