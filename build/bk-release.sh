@@ -7,6 +7,7 @@ set -euo pipefail
 docker run \
     --user $(id -u):$(getent group docker | cut -d: -f3) \
     -v /var/run/docker.sock:/var/run/docker.sock \
+    -v $HOME/.docker/config.json:$HOME/.docker/config.json \
     -v $(pwd):/go/src/ui-backend \
     -w /go/src/ui-backend \
     -e HOME=/go \
