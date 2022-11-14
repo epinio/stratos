@@ -17,6 +17,8 @@ before:
 release:
   disable: true
 
+dist: /tmp/_dist
+
 # binary builds
 builds:
 
@@ -25,7 +27,7 @@ builds:
     dir: src/jetstream
     binary: epinio-ui
     ldflags:
-      - -w -s -X "main.appVersion={{ .Version }}"
+      - -w -s -X "main.appVersion={{ incminor .Version }}-next"
     goos:
       - linux
     goarch:
@@ -39,7 +41,7 @@ builds:
     dir: src/jetstream
     binary: epinio-ui
     ldflags:
-      - -w -s -X "main.appVersion={{ .Version }}"
+      - -w -s -X "main.appVersion={{ incminor .Version }}-next"
     goos:
       - linux
     goarch:
@@ -68,7 +70,7 @@ dockers:
     - epinio-ui-amd64
 
     image_templates:
-    - "ghcr.io/epinio/epinio-ui:{{ .Version }}-amd64"
+    - "ghcr.io/epinio/epinio-ui:{{ incminor .Version }}-next-amd64"
     - "ghcr.io/epinio/epinio-ui:latest-next-amd64"
 
     build_flag_templates:
@@ -76,7 +78,7 @@ dockers:
     - "--label=org.opencontainers.image.created={{.Date}}"
     - "--label=org.opencontainers.image.title={{.ProjectName}}"
     - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-    - "--label=org.opencontainers.image.version={{.Version}}"
+    - "--label=org.opencontainers.image.version={{ incminor .Version }}-next"
     - "--label=epinio.io.ui.source={{.Env.UI_BUNDLE_URL}}"
     - "--label=org.opencontainers.image.source=https://github.com/epinio/ui-backend"
     - "--build-arg=DIST_BINARY=epinio-ui"
@@ -95,7 +97,7 @@ dockers:
     - epinio-ui-arm64
 
     image_templates:
-    - "ghcr.io/epinio/epinio-ui:{{ .Version }}-arm64v8"
+    - "ghcr.io/epinio/epinio-ui:{{ incminor .Version }}-next-arm64v8"
     - "ghcr.io/epinio/epinio-ui:latest-next-arm64v8"
 
     build_flag_templates:
@@ -103,7 +105,7 @@ dockers:
     - "--label=org.opencontainers.image.created={{.Date}}"
     - "--label=org.opencontainers.image.title={{.ProjectName}}"
     - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-    - "--label=org.opencontainers.image.version={{.Version}}"
+    - "--label=org.opencontainers.image.version={{ incminor .Version }}-next"
     - "--label=epinio.io.ui.source={{.Env.UI_BUNDLE_URL}}"
     - "--label=org.opencontainers.image.source=https://github.com/epinio/ui-backend"
     - "--build-arg=DIST_BINARY=epinio-ui"
@@ -114,8 +116,8 @@ dockers:
 
 docker_manifests:
   - id: epinio-ui
-    name_template: "ghcr.io/epinio/epinio-ui:latest-next-arm64v8"
+    name_template: "ghcr.io/epinio/epinio-ui:latest-next"
 
     image_templates:
-    - ghcr.io/epinio/epinio-ui:{{ .Version }}-amd64
-    - ghcr.io/epinio/epinio-ui:{{ .Version }}-arm64v8
+    - ghcr.io/epinio/epinio-ui:{{ incminor .Version }}-next-amd64
+    - ghcr.io/epinio/epinio-ui:{{ incminor .Version }}-next-arm64v8

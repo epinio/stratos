@@ -51,6 +51,13 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Get latest tag
+        id: get_latest_tag
+        run: echo "LATEST_TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
+      -
+        name: Tag current commit as latest-next
+        run: git tag ${{ steps.get_latest_tag.outputs.LATEST_TAG }}-next
 
       # if the ui_bundle_url is defined download and unpack the dashboard
       -
@@ -96,4 +103,7 @@ jobs:
         run: ./build/bk-release.sh release --rm-dist -f .goreleaser-next.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          UI_BUNDLE_URL: "${{ github.event.inputs.ui_bundle_url || 'dev' }}"
+          UI_BUNDLE_URL: "${{ github.event.inputs.ui_bundle_url || 'dev' }}"      
+      -
+        name: Cleanup the latest-next tag
+        run: git tag -d ${{ steps.get_latest_tag.outputs.LATEST_TAG }}-next
