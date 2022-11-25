@@ -142,9 +142,13 @@ dockers:
     - ui/
 
 docker_manifests:
-  - id: epinio-ui
-    name_template: "ghcr.io/epinio/epinio-ui:latest-next-arm64v8"
-
+  -
+    name_template: "ghcr.io/epinio/epinio-ui:latest"
+    image_templates:
+    - ghcr.io/epinio/epinio-ui:{{ .Tag }}-amd64
+    - ghcr.io/epinio/epinio-ui:{{ .Tag }}-arm64v8
+  -
+    name_template: "ghcr.io/epinio/epinio-ui:{{ .Tag }}"
     image_templates:
     - ghcr.io/epinio/epinio-ui:{{ .Tag }}-amd64
     - ghcr.io/epinio/epinio-ui:{{ .Tag }}-arm64v8
