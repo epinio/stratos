@@ -1,0 +1,123 @@
+---
+project_name: epinio-ui
+
+archives:
+  - name_template: '{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+    replacements:
+      amd64: x86_64
+    format: binary
+    format_overrides:
+      - goos: windows
+        format: zip
+
+before:
+  hooks:
+    - sh -c "cd src/jetstream && go mod download"
+
+release:
+  disable: true
+
+dist: /tmp/_dist
+
+# binary builds
+builds:
+
+  # amd64
+  - id: epinio-ui-amd64
+    dir: src/jetstream
+    binary: epinio-ui
+    ldflags:
+      - -w -s -X "main.appVersion={{ incminor .Version }}-next"
+    goos:
+      - linux
+    goarch:
+      - amd64
+    env:
+      - CC=x86_64-linux-gnu-gcc
+      - CXX=x86_64-linux-gnu-g++
+
+  # arm64
+  - id: epinio-ui-arm64
+    dir: src/jetstream
+    binary: epinio-ui
+    ldflags:
+      - -w -s -X "main.appVersion={{ incminor .Version }}-next"
+    goos:
+      - linux
+    goarch:
+      - arm64
+    env:
+      - CC=aarch64-linux-gnu-gcc
+      - CXX=aarch64-linux-gnu-g++
+  
+
+changelog:
+  skip: false
+
+snapshot:
+  name_template: "{{ incminor .Version }}-next"
+
+# docker build
+dockers:
+
+  # amd64
+  - id: epinio-ui-amd64
+    goos: linux
+    goarch: amd64
+    use: buildx
+
+    ids:
+    - epinio-ui-amd64
+
+    image_templates:
+    - "ghcr.io/epinio/epinio-ui:{{ incminor .Version }}-next-amd64"
+    - "ghcr.io/epinio/epinio-ui:latest-next-amd64"
+
+    build_flag_templates:
+    - "--pull"
+    - "--label=org.opencontainers.image.created={{.Date}}"
+    - "--label=org.opencontainers.image.title={{.ProjectName}}"
+    - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+    - "--label=org.opencontainers.image.version={{ incminor .Version }}-next"
+    - "--label=epinio.io.ui.source={{.Env.UI_BUNDLE_URL}}"
+    - "--label=org.opencontainers.image.source=https://github.com/epinio/ui-backend"
+    - "--build-arg=DIST_BINARY=epinio-ui"
+    - "--platform=linux/amd64"
+
+    extra_files:
+    - ui/
+
+  # arm64
+  - id: epinio-ui-arm64
+    goos: linux
+    goarch: arm64
+    use: buildx
+
+    ids:
+    - epinio-ui-arm64
+
+    image_templates:
+    - "ghcr.io/epinio/epinio-ui:{{ incminor .Version }}-next-arm64v8"
+    - "ghcr.io/epinio/epinio-ui:latest-next-arm64v8"
+
+    build_flag_templates:
+    - "--pull"
+    - "--label=org.opencontainers.image.created={{.Date}}"
+    - "--label=org.opencontainers.image.title={{.ProjectName}}"
+    - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+    - "--label=org.opencontainers.image.version={{ incminor .Version }}-next"
+    - "--label=epinio.io.ui.source={{.Env.UI_BUNDLE_URL}}"
+    - "--label=org.opencontainers.image.source=https://github.com/epinio/ui-backend"
+    - "--build-arg=DIST_BINARY=epinio-ui"
+    - "--platform=linux/arm64/v8"
+
+    extra_files:
+    - ui/
+
+docker_manifests:
+  - id: epinio-ui
+    name_template: "ghcr.io/epinio/epinio-ui:latest-next"
+
+    image_templates:
+    - ghcr.io/epinio/epinio-ui:{{ incminor .Version }}-next-amd64
+    - ghcr.io/epinio/epinio-ui:{{ incminor .Version }}-next-arm64v8

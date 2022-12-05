@@ -1,0 +1,109 @@
+name: Release Next
+
+on:
+  schedule:
+    - cron:  '0 1 * * *'
+  workflow_dispatch:
+    inputs:
+      ui_bundle_url:
+        description: "ui_bundle_url"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  SETUP_GO_VERSION: '1.18'
+  SETUP_NODE_VERSION: '16'
+
+jobs:
+  release-next:
+    runs-on: self-hosted
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      -
+        name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.SETUP_GO_VERSION }}
+      -
+        name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.SETUP_NODE_VERSION }}
+      -
+        name: Install yarn
+        run: npm install  --global yarn
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -
+        name: Login to GitHub Docker Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Get latest tag
+        id: get_latest_tag
+        run: echo "LATEST_TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
+      -
+        name: Tag current commit as latest-next
+        run: git tag ${{ steps.get_latest_tag.outputs.LATEST_TAG }}-next
+
+      # if the ui_bundle_url is defined download and unpack the dashboard
+      -
+        name: Download dashboard
+        if: ${{ github.event.inputs.ui_bundle_url != '' }}
+        run: |
+          mkdir ui
+          wget "${{ github.event.inputs.ui_bundle_url }}"
+          tar xfz *.tar.gz -C ui
+
+      # otherwise fetch and build the latest dashboard from the repository
+      -
+        name: Checkout Rancher Dashboard UI
+        if: ${{ github.event.inputs.ui_bundle_url == '' }}
+        uses: actions/checkout@v2
+        with:
+          repository: rancher/dashboard
+          ref: epinio-dev
+          submodules: recursive
+          fetch-depth: 0
+          path: dashboard
+      -
+        name: Build Epinio dashboard
+        if: ${{ github.event.inputs.ui_bundle_url == '' }}
+        run: |
+          pushd dashboard
+          ./.github/workflows/scripts/build-dashboard.sh
+          mv $OUTPUT_DIR/$ARTIFACT_NAME ../ui
+          popd
+          rm -rf dashboard
+        env:
+          RANCHER_ENV: epinio
+          EXCLUDES_PKG: rancher-components,harvester
+          EXCLUDES_NUXT_PLUGINS: plugins/plugin,plugins/version
+          OUTPUT_DIR: dist
+          RELEASE_DIR: release
+          ARTIFACT_NAME: rancher-dashboard-epinio-standalone-embed
+
+      #################
+
+      -
+        name: Run GoReleaser Cross
+        run: ./build/bk-release.sh release --rm-dist -f .goreleaser-next.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          UI_BUNDLE_URL: "${{ github.event.inputs.ui_bundle_url || 'dev' }}"      
+      -
+        name: Cleanup the latest-next tag
+        run: git tag -d ${{ steps.get_latest_tag.outputs.LATEST_TAG }}-next
