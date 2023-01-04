@@ -82,7 +82,7 @@ func NewOIDCProviderWithEndpoint(p jInterfaces.PortalProxy, ctx context.Context,
 		Endpoint:     provider.Endpoint(),
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
-		RedirectURL:  safeUiUrl + "/verify-auth",
+		RedirectURL:  safeUiUrl + "/auth/verify",
 		Scopes:       DefaultScopes,
 	}
 
