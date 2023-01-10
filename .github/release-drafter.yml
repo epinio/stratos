@@ -8,10 +8,10 @@ categories:
   - title: '🧰 Maintenance'
 
 exclude-labels:
-  - status/duplicate
-  - status/invalid
-  - status/wontfix
-  - status/question
+  - 'status/duplicate'
+  - 'status/invalid'
+  - 'status/wontfix'
+  - 'status/question'
 
 change-template: '- $TITLE (#$NUMBER)'
 change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add ` to disable code blocks.
