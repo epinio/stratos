@@ -16,8 +16,7 @@ import (
 )
 
 const (
-	clientID     = "epinio-ui"
-	clientSecret = "jetstream-dex-epinio-ui" // Should match dex config for client
+	clientID = "epinio-ui"
 )
 
 var (
@@ -78,11 +77,16 @@ func NewOIDCProviderWithEndpoint(p jInterfaces.PortalProxy, ctx context.Context,
 		safeUiUrl = uiUrl[:lastIndex]
 	}
 
+	clientSecret := p.Env().String("EPINIO_DEX_SECRET", "") // Should match dex config for client
+	if len(clientSecret) == 0 {
+		return nil, errors.New("Could not find env EPINIO_DEX_SECRET")
+	}
+
 	config := &oauth2.Config{
 		Endpoint:     provider.Endpoint(),
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
-		RedirectURL:  safeUiUrl + "/auth/verify",
+		RedirectURL:  safeUiUrl + "/auth/verify/", // Forward slash is required in order to avoid jetstream 301 --> stripping query params
 		Scopes:       DefaultScopes,
 	}
 

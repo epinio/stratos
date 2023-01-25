@@ -203,10 +203,14 @@ func (epinio *Epinio) AddRootGroupRoutes(echoGroup *echo.Group) {
 		c.Set("auth_type", "local")
 		return p.GetStratosAuthService().Login(c)
 	})
-	normanPublicGroup.POST("/authProviders/"+normanProxy.RancherEpinioAuthProvider+"/login", func(c echo.Context) error {
-		c.Set("auth_type", "oidc")
-		return p.GetStratosAuthService().Login(c)
-	})
+
+	epinioDexEnabled, _ := p.Env().Bool("EPINIO_DEX_ENABLED")
+	if epinioDexEnabled {
+		normanPublicGroup.POST("/authProviders/"+normanProxy.RancherEpinioAuthProvider+"/login", func(c echo.Context) error {
+			c.Set("auth_type", "oidc")
+			return p.GetStratosAuthService().Login(c)
+		})
+	}
 
 	normanPublicGroup.GET("/authProviders", func(c echo.Context) error {
 		return normanProxy.GetAuthProviders(c, epinio.portalProxy)

@@ -40,12 +40,21 @@ func NewAuthProviders(ec echo.Context, p jInterfaces.PortalProxy) (*interfaces.C
 
 	col.Links["self"] = interfaces.GetSelfLink(ec)
 
-	col.Data = make([]interface{}, 2)
+	epinioDexEnabled, _ := p.Env().Bool("EPINIO_DEX_ENABLED")
+
+	providerCount := 1
+	if epinioDexEnabled {
+		providerCount = 2
+	}
+
+	col.Data = make([]interface{}, providerCount)
 
 	col.Data[0] = NewAuthProvider(ec, "local")
 
-	// Note - The auth provider `RedirectUrl` is not created here (it needs to be unique per request)
-	col.Data[1] = NewAuthProvider(ec, RancherEpinioAuthProvider)
+	if epinioDexEnabled {
+		// Note - The auth provider `RedirectUrl` is not created here (it needs to be unique per request)
+		col.Data[1] = NewAuthProvider(ec, RancherEpinioAuthProvider)
+	}
 
 	return &col, nil
 }
