@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/sha1"
 	"crypto/tls"
 	"database/sql"
@@ -25,6 +26,8 @@ import (
 	"time"
 
 	"github.com/epinio/ui-backend/src/jetstream/custombinder"
+	"github.com/epinio/ui-backend/src/jetstream/dex"
+	epinio_utils "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/utils"
 
 	"bitbucket.org/liamstask/goose/lib/goose"
 	"github.com/antonlindstrom/pgstore"
@@ -90,6 +93,8 @@ var (
 	// Clients to use typically for mutating operations - typically allow a longer request timeout
 	httpClientMutating        = http.Client{}
 	httpClientMutatingSkipSSL = http.Client{}
+	// Cached dex client
+	dexClient interfaces.OIDCProvider
 )
 
 // getEnvironmentLookup return a search path for configuration settings
@@ -742,6 +747,10 @@ func newPortalProxy(pc interfaces.PortalConfig, dcp *sql.DB, ss HttpSessionStore
 		Handler: pp.DoOidcFlowRequest,
 	})
 
+	pp.AddAuthProvider(interfaces.AuthTypeDex, interfaces.AuthProvider{
+		Handler: pp.DoDexFlowRequest,
+	})
+
 	var err error
 	pp.APIKeysRepository, err = apikeys.NewPgsqlAPIKeysRepository(pp.DatabaseConnectionPool)
 	if err != nil {
@@ -1065,12 +1074,6 @@ func (p *portalProxy) registerRoutes(e *echo.Echo, needSetupMiddleware bool) {
 	// Connect to Endpoint (SSO)
 	stableAPIGroup.GET("/tokens", p.ssoLoginToCNSI)
 
-	// CNSI operations
-	// stableAPIGroup.GET("/endpoints", p.listCNSIs) TODO: RC Q N
-
-	// Proxy single request
-	// stableAPIGroup.GET("/proxy/:uuid/*", p.ProxySingleRequest) // TODO: RC Q N
-
 	sessionAuthGroup := sessionGroup.Group("/auth")
 
 	// Connect to Endpoint (SSO)
@@ -1307,4 +1310,23 @@ func (portalProxy *portalProxy) SetStoreFactory(f interfaces.StoreFactory) inter
 	old := portalProxy.StoreFactory
 	portalProxy.StoreFactory = f
 	return old
+}
+
+func (p *portalProxy) GetDex() (interfaces.OIDCProvider, error) {
+	if dexClient != nil {
+		return dexClient, nil
+	}
+
+	epinioCnsi, err := epinio_utils.FindEpinioEndpoint(p)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find epinio endpoint for dex auth url: %+v", err)
+	}
+
+	dexClient, err := dex.NewOIDCProviderWithEndpoint(p, context.Background(), epinioCnsi.AuthorizationEndpoint, epinioCnsi.Metadata)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create dex OIDC provider: %+v", err)
+	}
+
+	return dexClient, nil
 }

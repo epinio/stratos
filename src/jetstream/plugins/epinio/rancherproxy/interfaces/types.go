@@ -49,11 +49,12 @@ func GetSelfLink(ec echo.Context, paths ...string) string {
 }
 
 type AuthProvider struct {
-	ID       string            `json:"id"`
-	Type     string            `json:"type"`
-	Actions  map[string]string `json:"actions"`
-	Links    map[string]string `json:"links"`
-	BaseType string            `json:"baseType"`
+	ID          string            `json:"id"`
+	Type        string            `json:"type"`
+	Actions     map[string]string `json:"actions"`
+	Links       map[string]string `json:"links"`
+	BaseType    string            `json:"baseType"`
+	RedirectUrl string            `json:"redirectUrl"`
 }
 
 type Collection struct {

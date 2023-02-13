@@ -24,6 +24,7 @@ func TestRegisterCFCluster(t *testing.T) {
 	req := setupMockReq("POST", "", map[string]string{
 		"cnsi_name":           "Some fancy CF Cluster",
 		"api_endpoint":        mockV2Info.URL,
+		"auth_endpoint":       mockV2Info.URL,
 		"skip_ssl_validation": "true",
 		"cnsi_client_id":      mockClientId,
 		"cnsi_client_secret":  mockClientSecret,
@@ -33,7 +34,7 @@ func TestRegisterCFCluster(t *testing.T) {
 	defer db.Close()
 
 	mock.ExpectExec(insertIntoCNSIs).
-		WithArgs(sqlmock.AnyArg(), "Some fancy CF Cluster", "epinio", mockV2Info.URL, "", "", "", true, mockClientId, sqlmock.AnyArg(), false, "", "").
+		WithArgs(sqlmock.AnyArg(), "Some fancy CF Cluster", "epinio", mockV2Info.URL, "abc", "", "abc", true, mockClientId, sqlmock.AnyArg(), false, "", "abc").
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	if err := pp.RegisterEndpoint(ctx, getCFPlugin(pp, "epinio").Info); err != nil {

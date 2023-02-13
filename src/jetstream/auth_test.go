@@ -349,8 +349,13 @@ func TestLoginToCNSI(t *testing.T) {
 		})
 
 		_, _, ctx, pp, db, mock := setupHTTPTest(req)
-		ctx.Set("rancher_username", "admin")
-		ctx.Set("rancher_password", "changeme")
+
+		tr := &interfaces.TokenRecord{
+			AuthType:     interfaces.AuthTypeHttpBasic,
+			AuthToken:    "aaa",
+			RefreshToken: "aaa",
+		}
+		ctx.Set("token", tr)
 
 		defer db.Close()
 
@@ -814,7 +819,7 @@ func TestVerifySession(t *testing.T) {
 func TestVerifySessionNoDate(t *testing.T) {
 	t.Parallel()
 
-	Convey("Test verify sesson without date", t, func() {
+	Convey("Test verify session without date", t, func() {
 
 		req := setupMockReq("GET", "", map[string]string{
 			"username": "admin",

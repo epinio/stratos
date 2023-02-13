@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -18,21 +19,21 @@ func (p *portalProxy) OAuthHandlerFunc(cnsiRequest *interfaces.CNSIRequest, req 
 
 		for {
 			expTime := time.Unix(tokenRec.TokenExpiry, 0)
+
 			if got401 || expTime.Before(time.Now()) {
 				refreshedTokenRec, err := refreshOAuthTokenFunc(cnsi.SkipSSLValidation, cnsiRequest.GUID, cnsiRequest.UserGUID, cnsi.ClientId, cnsi.ClientSecret, cnsi.TokenEndpoint)
 				if err != nil {
 					log.Info(err)
-					return nil, fmt.Errorf("Couldn't refresh token for CNSI with GUID %s", cnsiRequest.GUID)
+					return nil, fmt.Errorf("couldn't refresh token for CNSI with GUID %s", cnsiRequest.GUID)
 				}
 				tokenRec = refreshedTokenRec
 			}
-			req.Header.Set("Authorization", "bearer "+tokenRec.AuthToken)
+			req.Header.Set("Authorization", "Bearer "+tokenRec.AuthToken) // Note - Needs to be capitalised!!!
 
-			var client http.Client
-			client = p.GetHttpClientForRequest(req, cnsi.SkipSSLValidation)
+			client := p.GetHttpClientForRequest(req, cnsi.SkipSSLValidation)
 			res, err := client.Do(req)
 			if err != nil {
-				return nil, fmt.Errorf("Request failed: %v", err)
+				return nil, fmt.Errorf("request failed: %v", err)
 			}
 
 			if res.StatusCode != 401 {
@@ -40,8 +41,18 @@ func (p *portalProxy) OAuthHandlerFunc(cnsiRequest *interfaces.CNSIRequest, req 
 			}
 
 			if got401 {
-				return res, errors.New("Failed to authorize")
+				return res, errors.New("failed to authorize")
 			}
+
+			if bodyReader := res.Body; bodyReader != nil {
+				var body []byte
+				if body, err = ioutil.ReadAll(bodyReader); err != nil {
+					return nil, errors.New("failed to read request body")
+				}
+				log.Debugf("Failed to authorize: %+v", string(body))
+
+			}
+
 			got401 = true
 		}
 	}

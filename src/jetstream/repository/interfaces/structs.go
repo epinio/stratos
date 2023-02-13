@@ -85,6 +85,8 @@ const (
 	AuthTypeBearer = "Bearer"
 	// AuthTypeToken is http header auth with token prefix
 	AuthTypeToken = "Token"
+	// AuthTypeOIDC means DEX
+	AuthTypeDex = "Dex"
 )
 
 const (
