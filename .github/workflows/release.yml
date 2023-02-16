@@ -5,10 +5,6 @@ on:
     tags:
       - "v*"
 
-permissions:
-  contents: write
-  packages: write
-
 env:
   SETUP_GO_VERSION: '1.18'
   # change this to embed a different UI dashboard
@@ -17,6 +13,10 @@ env:
 jobs:
   release:
     runs-on: self-hosted
+    permissions:
+      id-token: write   # This is the key for OIDC!
+      contents: write
+      packages: write
     steps:
       -
         name: Checkout
@@ -29,6 +29,10 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ env.SETUP_GO_VERSION }}
+      -
+        uses: anchore/sbom-action/download-syft@v0.13.1
+      -
+        uses: sigstore/cosign-installer@v2.8.1
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -55,6 +59,20 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           UI_BUNDLE_URL: "${{ env.UI_BUNDLE_URL }}"
+          # The "id-token: write" permission for the OIDC will set the ACTIONS_ID_TOKEN_REQUEST_URL and ACTIONS_ID_TOKEN_REQUEST_TOKEN
+          # environment variables. Since we are running goreleaser-cross from a Docker image we need to pass those to the script and the container.
+          # See: https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#updating-your-actions-for-oidc
+          ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
+          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
+      -
+        name: Verify signatures on the generated docker images and manifests
+        id: verify_signatures
+        run: |
+          cosign verify ghcr.io/epinio/epinio-ui:${{ steps.get_tag.outputs.TAG }}
+          cosign verify ghcr.io/epinio/epinio-ui:latest
+        env:
+          DOCKER_CLI_EXPERIMENTAL: enabled
+          COSIGN_EXPERIMENTAL: 1
 
       # Allow to release Epinio UI Helm chart automatically when we release Epinio.
       # The tag is sent to the Helm chart repo.
