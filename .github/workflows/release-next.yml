@@ -21,6 +21,8 @@ env:
 jobs:
   release-next:
     runs-on: self-hosted
+    permissions:
+      id-token: write   # This is the key for OIDC!
     steps:
       -
         name: Checkout
@@ -41,6 +43,8 @@ jobs:
       -
         name: Install yarn
         run: npm install  --global yarn
+      -
+        uses: anchore/sbom-action/download-syft@v0.13.1
       -
         uses: sigstore/cosign-installer@v2.8.1
       -

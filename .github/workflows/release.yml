@@ -17,6 +17,8 @@ env:
 jobs:
   release:
     runs-on: self-hosted
+    permissions:
+      id-token: write   # This is the key for OIDC!
     steps:
       -
         name: Checkout
@@ -29,6 +31,8 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ env.SETUP_GO_VERSION }}
+      -
+        uses: anchore/sbom-action/download-syft@v0.13.1
       -
         uses: sigstore/cosign-installer@v2.8.1
       -

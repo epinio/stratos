@@ -163,6 +163,19 @@ docker_manifests:
     - ghcr.io/epinio/epinio-ui:{{ incminor .Version }}-next-arm64v8
     - ghcr.io/epinio/epinio-ui:{{ incminor .Version }}-next-s390x
 
+# Based on https://blog.goreleaser.com/goreleaser-and-software-supply-chain-security-e8917b26924b
+##
+
+# creates SBOMs of all archives and the source tarball using syft
+# https://goreleaser.com/customization/sbom
+# Two different sbom configurations need two different IDs
+
+sboms:
+  - id: archive 
+    artifacts: archive
+  - id: source
+    artifacts: source
+
 # signs our docker images
 # https://goreleaser.com/customization/docker_sign
 
