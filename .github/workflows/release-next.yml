@@ -42,6 +42,8 @@ jobs:
         name: Install yarn
         run: npm install  --global yarn
       -
+        uses: sigstore/cosign-installer@v2.8.1
+      -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
       -
@@ -103,7 +105,15 @@ jobs:
         run: ./build/bk-release.sh release --rm-dist -f .goreleaser-next.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          UI_BUNDLE_URL: "${{ github.event.inputs.ui_bundle_url || 'dev' }}"      
+          UI_BUNDLE_URL: "${{ github.event.inputs.ui_bundle_url || 'dev' }}"
+      -
+        name: Verify signatures on the generated docker images and manifests
+        id: verify_signatures
+        run: |
+          cosign verify ghcr.io/epinio/epinio-ui:${{ steps.get_latest_tag.outputs.LATEST_TAG }}-next
+        env:
+          DOCKER_CLI_EXPERIMENTAL: enabled
+          COSIGN_EXPERIMENTAL: 1
       -
         name: Cleanup the latest-next tag
         run: git tag -d ${{ steps.get_latest_tag.outputs.LATEST_TAG }}-next

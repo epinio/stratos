@@ -30,6 +30,8 @@ jobs:
         with:
           go-version: ${{ env.SETUP_GO_VERSION }}
       -
+        uses: sigstore/cosign-installer@v2.8.1
+      -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
       -
@@ -55,6 +57,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           UI_BUNDLE_URL: "${{ env.UI_BUNDLE_URL }}"
+      -
+        name: Verify signatures on the generated docker images and manifests
+        id: verify_signatures
+        run: |
+          cosign verify ghcr.io/epinio/epinio-ui:${{ steps.get_tag.outputs.TAG }}
+        env:
+          DOCKER_CLI_EXPERIMENTAL: enabled
+          COSIGN_EXPERIMENTAL: 1
 
       # Allow to release Epinio UI Helm chart automatically when we release Epinio.
       # The tag is sent to the Helm chart repo.
