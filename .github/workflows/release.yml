@@ -69,6 +69,7 @@ jobs:
         id: verify_signatures
         run: |
           cosign verify ghcr.io/epinio/epinio-ui:${{ steps.get_tag.outputs.TAG }}
+          cosign verify ghcr.io/epinio/epinio-ui:latest
         env:
           DOCKER_CLI_EXPERIMENTAL: enabled
           COSIGN_EXPERIMENTAL: 1

@@ -117,7 +117,7 @@ jobs:
         name: Verify signatures on the generated docker images and manifests
         id: verify_signatures
         run: |
-          cosign verify ghcr.io/epinio/epinio-ui:${{ steps.get_latest_tag.outputs.LATEST_TAG }}-next
+          cosign verify ghcr.io/epinio/epinio-ui:latest-next
         env:
           DOCKER_CLI_EXPERIMENTAL: enabled
           COSIGN_EXPERIMENTAL: 1
