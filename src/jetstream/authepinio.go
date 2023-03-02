@@ -20,7 +20,7 @@ import (
 	"github.com/epinio/ui-backend/src/jetstream/repository/interfaces"
 )
 
-//More fields will be moved into here as global portalProxy struct is phased out
+// More fields will be moved into here as global portalProxy struct is phased out
 type epinioAuth struct {
 	databaseConnectionPool *sql.DB
 	p                      *portalProxy
@@ -30,7 +30,7 @@ func (a *epinioAuth) ShowConfig(config *interfaces.ConsoleConfig) {
 	log.Infof("... Epinio Auth             : %v", true)
 }
 
-//Login provides Local-auth specific Stratos login
+// Login provides Local-auth specific Stratos login
 func (a *epinioAuth) Login(c echo.Context) error {
 
 	//This check will remain in until auth is factored down into its own package
@@ -80,20 +80,20 @@ func (a *epinioAuth) Login(c echo.Context) error {
 	return err
 }
 
-//Logout provides Local-auth specific Stratos login
+// Logout provides Local-auth specific Stratos login
 func (a *epinioAuth) Logout(c echo.Context) error {
 	log.Debug("Logout")
 	return a.logout(c)
 }
 
-//GetUsername gets the user name for the specified local user
+// GetUsername gets the user name for the specified local user
 func (a *epinioAuth) GetUsername(userid string) (string, error) {
 	log.Debug("GetUsername")
 
 	return userid, nil // username == user guid
 }
 
-//GetUser gets the user guid for the specified local user
+// GetUser gets the user guid for the specified local user
 func (a *epinioAuth) GetUser(userGUID string) (*interfaces.ConnectedUser, error) {
 	log.Debug("GetUser")
 
@@ -117,7 +117,7 @@ func (a *epinioAuth) VerifySession(c echo.Context, sessionUser string, sessionEx
 	return nil
 }
 
-//epinioLocalLogin verifies local user credentials
+// epinioLocalLogin verifies local user credentials
 func (a *epinioAuth) epinioLocalLogin(c echo.Context) (string, string, error) {
 	log.Debug("epinioLocalLogin")
 
@@ -205,7 +205,7 @@ func (a *epinioAuth) verifyLocalLoginCreds(username, password string) error {
 }
 
 // ------------------
-//epinioOIDCLogin verifies DEX credentials
+// epinioOIDCLogin verifies DEX credentials
 func (a *epinioAuth) epinioOIDCLogin(c echo.Context) (string, string, error) {
 	log.Debug("epinioOIDCLogin")
 
@@ -231,15 +231,15 @@ func (a *epinioAuth) epinioOIDCLogin(c echo.Context) (string, string, error) {
 	oidcProvider, err := a.p.GetDex()
 
 	if err != nil {
-		msg := "unable to create dex client: %+v"
-		log.Errorf(msg, err)
+		msg := fmt.Sprintf("unable to create dex client: %+v", err)
+		log.Error(msg)
 		return "", "", errors.New(msg)
 	}
 
 	token, err := oidcProvider.ExchangeWithPKCE(c.Request().Context(), params.Code, params.CodeVerifier)
 	if err != nil {
-		msg := "failed to get token from code: %+v"
-		log.Errorf(msg, err)
+		msg := fmt.Sprintf("failed to get token from code: %+v", err)
+		log.Errorf(msg)
 		return "", "", errors.New(msg)
 	}
 
@@ -280,13 +280,12 @@ func (a *epinioAuth) epinioOIDCLogin(c echo.Context) (string, string, error) {
 }
 
 // ------------------
-//generateLoginSuccessResponse
+// generateLoginSuccessResponse
 func (e *epinioAuth) generateLoginSuccessResponse(c echo.Context, userGUID, username string) error {
 	log.Debug("generateLoginSuccessResponse")
 
 	var err error
-	var expiry int64
-	expiry = math.MaxInt64 // Basic auth type never expires
+	var expiry int64 = math.MaxInt64 // Basic auth type never expires
 
 	sessionValues := make(map[string]interface{})
 	sessionValues["user_id"] = userGUID
@@ -338,14 +337,17 @@ func (e *epinioAuth) generateLoginSuccessResponse(c echo.Context, userGUID, user
 	return err
 }
 
-//logout
+// logout
 func (a *epinioAuth) logout(c echo.Context) error {
 	a.p.removeEmptyCookie(c)
 
 	// Remove the XSRF Token from the session
-	a.p.unsetSessionValue(c, XSRFTokenSessionName)
+	err := a.p.unsetSessionValue(c, XSRFTokenSessionName)
+	if err != nil {
+		log.Errorf("Unable to unset session value: %v", err)
+	}
 
-	err := a.p.clearSession(c)
+	err = a.p.clearSession(c)
 	if err != nil {
 		log.Errorf("Unable to clear session: %v", err)
 	}

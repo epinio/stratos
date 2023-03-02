@@ -54,21 +54,35 @@ func createContext(p jInterfaces.PortalProxy, defaultCtx context.Context) (conte
 }
 
 // NewOIDCProviderWithEndpoint construct an OIDCProvider fetching its configuration from the endpoint URL
-func NewOIDCProviderWithEndpoint(p jInterfaces.PortalProxy, ctx context.Context, authEndpoint, uiUrl string) (*OIDCProvider, error) {
-	issuer := authEndpoint
+func NewOIDCProviderWithEndpoint(p jInterfaces.PortalProxy, ctx context.Context, authEndpoint, issuer, uiUrl string) (*OIDCProvider, error) {
 	endpoint, err := url.Parse(authEndpoint)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse auth endpoint")
 	}
 
-	newCtx, err := createContext(p, ctx)
+	ctx, err = createContext(p, ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create context")
 	}
 
-	provider, err := oidc.NewProvider(newCtx, issuer)
+	isLocalDex := strings.HasSuffix(endpoint.Hostname(), ".svc.cluster.local")
+	if isLocalDex {
+		ctx = oidc.InsecureIssuerURLContext(ctx, issuer)
+	}
+
+	provider, err := oidc.NewProvider(ctx, authEndpoint)
 	if err != nil {
 		return nil, errors.Wrap(err, "creating the provider")
+	}
+
+	// normally this is the "issuer" (external endpoint)
+	configEndpoint := provider.Endpoint()
+	// but with a local we need to use the internal endpoint
+	if isLocalDex {
+		configEndpoint = oauth2.Endpoint{
+			AuthURL:  authEndpoint + "/auth",
+			TokenURL: authEndpoint + "/token",
+		}
 	}
 
 	lastIndex := len(uiUrl) - 1
@@ -83,7 +97,7 @@ func NewOIDCProviderWithEndpoint(p jInterfaces.PortalProxy, ctx context.Context,
 	}
 
 	config := &oauth2.Config{
-		Endpoint:     provider.Endpoint(),
+		Endpoint:     configEndpoint,
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
 		RedirectURL:  safeUiUrl + "/auth/verify/", // Forward slash is required in order to avoid jetstream 301 --> stripping query params
@@ -110,6 +124,14 @@ func (pc *OIDCProvider) AuthCodeURLWithPKCE(state string) (string, string) {
 		oauth2.SetAuthURLParam("code_verifier", codeVerifier.Value),
 		oauth2.SetAuthURLParam("code_challenge", codeVerifier.ChallengeS256()),
 		oauth2.SetAuthURLParam("code_challenge_method", "S256"),
+	)
+
+	// the redirect URL has the "internal" endpoint, and we need to change it to the external one
+	authCodeURL = strings.Replace(
+		authCodeURL,
+		pc.Config.Endpoint.AuthURL,
+		pc.Provider.Endpoint().AuthURL,
+		1,
 	)
 
 	return authCodeURL, codeVerifier.Value

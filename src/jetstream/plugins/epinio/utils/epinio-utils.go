@@ -1,6 +1,7 @@
 package epinio_utils
 
 import (
+	"encoding/json"
 	"fmt"
 
 	eInterfaces "github.com/epinio/ui-backend/src/jetstream/plugins/epinio/interfaces"
@@ -17,19 +18,24 @@ func FindEpinioEndpoint(p jInterfaces.PortalProxy) (*jInterfaces.CNSIRecord, err
 		return nil, fmt.Errorf(msg, err)
 	}
 
-	var epinioEndpoint *jInterfaces.CNSIRecord
 	for _, e := range endpoints {
 		if e.CNSIType == eInterfaces.EndpointType {
-			epinioEndpoint = e
-			break
+			return e, nil
 		}
 	}
 
-	if epinioEndpoint == nil {
-		msg := "failed to find an epinio endpoint"
-		log.Error(msg)
-		return nil, fmt.Errorf(msg)
+	msg := "failed to find an epinio endpoint"
+	log.Error(msg)
+	return nil, fmt.Errorf(msg)
+}
+
+func GetMetadata(record *jInterfaces.CNSIRecord) (eInterfaces.CNSIMetadata, error) {
+	var metadata eInterfaces.CNSIMetadata
+
+	err := json.Unmarshal([]byte(record.Metadata), &metadata)
+	if err != nil {
+		log.Errorf("error unmarshalling metadata [%s]: %s", record.Metadata, err.Error())
 	}
 
-	return epinioEndpoint, nil
+	return metadata, nil
 }

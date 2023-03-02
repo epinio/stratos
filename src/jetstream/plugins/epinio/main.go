@@ -1,6 +1,7 @@
 package epinio
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -21,6 +22,7 @@ const (
 	epinioApiUrlEnv                  = "EPINIO_API_URL"
 	epinioApiWsUrl                   = "EPINIO_WSS_URL"
 	epinioDexAuthUrl                 = "EPINIO_DEX_AUTH_URL"
+	epinioDexIssuer                  = "EPINIO_DEX_ISSUER"
 	epinioUiUrl                      = "EPINIO_UI_URL"
 	epinioApiUrlskipSSLValidationEnv = "EPINIO_API_SKIP_SSL"
 )
@@ -31,6 +33,7 @@ type Epinio struct {
 	epinioApiUrl                  string
 	epinioApiWsUrl                string
 	epinioAuthUrl                 string
+	epinioDexIssuer               string
 	epinioUiUrl                   string
 	epinioApiUrlskipSSLValidation bool
 }
@@ -68,6 +71,8 @@ func Init(portalProxy interfaces.PortalProxy) (interfaces.StratosPlugin, error) 
 		log.Infof("Didn't find `%s`, falling back to `%s`", epinioDexAuthUrl, epinioAuthUrlValue)
 	}
 
+	epinioDexIssuerValue, _ := portalProxy.Env().Lookup(epinioDexIssuer)
+
 	epinioUiUrlValue, _ := portalProxy.Env().Lookup(epinioUiUrl)
 	if len(epinioUiUrlValue) == 0 {
 		epinioUiUrlValue = epinioApiUrlValue // Default to the same as the epinio api
@@ -77,15 +82,17 @@ func Init(portalProxy interfaces.PortalProxy) (interfaces.StratosPlugin, error) 
 		"Epinio API url: '%s'\n"+
 		"Epinio WSS url: '%s'\n"+
 		"Epinio Auth url: '%s'\n"+
+		"Epinio Auth issuer: '%s'\n"+
 		"Epinio UI url: '%s'\n"+
 		"Skipping SSL Validation: '%+v'",
-		epinioApiUrlValue, epinioApiWsUrlValue, epinioAuthUrlValue, epinioUiUrlValue, epinioApiUrlskipSSLValidation)
+		epinioApiUrlValue, epinioApiWsUrlValue, epinioAuthUrlValue, epinioDexIssuerValue, epinioUiUrlValue, epinioApiUrlskipSSLValidation)
 
 	return &Epinio{
 		portalProxy:                   portalProxy,
 		epinioApiUrl:                  epinioApiUrlValue,
 		epinioApiWsUrl:                epinioApiWsUrlValue,
 		epinioAuthUrl:                 epinioAuthUrlValue,
+		epinioDexIssuer:               epinioDexIssuerValue,
 		epinioUiUrl:                   epinioUiUrlValue,
 		epinioApiUrlskipSSLValidation: epinioApiUrlskipSSLValidation,
 	}, nil
@@ -300,8 +307,18 @@ func (epinio *Epinio) Info(apiEndpoint string, skipSSLValidation bool) (interfac
 		CNSIType:               eInterfaces.EndpointType,
 		DopplerLoggingEndpoint: epinio.epinioApiWsUrl,
 		AuthorizationEndpoint:  epinio.epinioAuthUrl,
-		Metadata:               epinio.epinioUiUrl,
 	}
+
+	// marshal Epinio metadata into the CNSIRecord
+	marshalledMetadata, err := json.Marshal(eInterfaces.CNSIMetadata{
+		UIURL:      epinio.epinioUiUrl,
+		DexAuthUrl: epinio.epinioAuthUrl,
+		DexIssuer:  epinio.epinioDexIssuer,
+	})
+	if err != nil {
+		return newCNSI, v2InfoResponse, err
+	}
+	newCNSI.Metadata = string(marshalledMetadata)
 
 	return newCNSI, v2InfoResponse, nil
 }
