@@ -1322,8 +1322,12 @@ func (p *portalProxy) GetDex() (interfaces.OIDCProvider, error) {
 		return nil, fmt.Errorf("failed to find epinio endpoint for dex auth url: %+v", err)
 	}
 
-	dexClient, err := dex.NewOIDCProviderWithEndpoint(p, context.Background(), epinioCnsi.AuthorizationEndpoint, epinioCnsi.Metadata)
+	metadata, err := epinio_utils.GetMetadata(epinioCnsi)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find epinio endpoint for dex auth url: %+v", err)
+	}
 
+	dexClient, err := dex.NewOIDCProviderWithEndpoint(p, context.Background(), epinioCnsi.AuthorizationEndpoint, metadata.DexIssuer, metadata.UIURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dex OIDC provider: %+v", err)
 	}

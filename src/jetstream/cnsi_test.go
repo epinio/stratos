@@ -33,8 +33,10 @@ func TestRegisterCFCluster(t *testing.T) {
 	_, _, ctx, pp, db, mock := setupHTTPTest(req)
 	defer db.Close()
 
+	metadata := `{"ui_url":"abc","dex_auth_url":"abc","dex_issuer":"abc"}`
+
 	mock.ExpectExec(insertIntoCNSIs).
-		WithArgs(sqlmock.AnyArg(), "Some fancy CF Cluster", "epinio", mockV2Info.URL, "abc", "", "abc", true, mockClientId, sqlmock.AnyArg(), false, "", "abc").
+		WithArgs(sqlmock.AnyArg(), "Some fancy CF Cluster", "epinio", mockV2Info.URL, "abc", "", "abc", true, mockClientId, sqlmock.AnyArg(), false, "", metadata).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	if err := pp.RegisterEndpoint(ctx, getCFPlugin(pp, "epinio").Info); err != nil {
