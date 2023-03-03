@@ -66,15 +66,18 @@ func Init(portalProxy interfaces.PortalProxy) (interfaces.StratosPlugin, error) 
 	}
 
 	epinioAuthUrlValue, _ := portalProxy.Env().Lookup(epinioDexAuthUrl)
-	if len(epinioAuthUrlValue) == 0 {
+	if epinioAuthUrlValue == "" {
 		epinioAuthUrlValue = strings.Replace(epinioApiUrlValue, "epinio.", "auth.", 1)
 		log.Infof("Didn't find `%s`, falling back to `%s`", epinioDexAuthUrl, epinioAuthUrlValue)
 	}
 
 	epinioDexIssuerValue, _ := portalProxy.Env().Lookup(epinioDexIssuer)
+	if epinioDexIssuerValue == "" {
+		epinioDexIssuerValue = epinioAuthUrlValue
+	}
 
 	epinioUiUrlValue, _ := portalProxy.Env().Lookup(epinioUiUrl)
-	if len(epinioUiUrlValue) == 0 {
+	if epinioUiUrlValue == "" {
 		epinioUiUrlValue = epinioApiUrlValue // Default to the same as the epinio api
 	}
 
