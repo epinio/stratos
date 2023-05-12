@@ -16,7 +16,7 @@ env:
 
 jobs:
   release-next:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     permissions:
       id-token: write   # This is the key for OIDC!
       contents: write
