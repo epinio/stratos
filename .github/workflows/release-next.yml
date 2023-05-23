@@ -99,6 +99,7 @@ jobs:
           OUTPUT_DIR: dist
           RELEASE_DIR: release
           ARTIFACT_NAME: rancher-dashboard-epinio-standalone-embed
+          NODE_OPTIONS: "--max-old-space-size=4096"
 
       #################
 
