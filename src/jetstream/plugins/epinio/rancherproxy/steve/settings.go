@@ -43,6 +43,7 @@ func NewDefaultSettings(ec echo.Context) *interfaces.Collection {
 	col.Data[2] = NewStringSettings(baseURL, "server-version", epinioVersion)
 	col.Data[3] = NewStringSettings(baseURL, "ui-theme", epinioTheme)
 	col.Data[4] = NewStringSettings(baseURL, "ui-favicon", GetFavicon())
+	col.Data[4] = NewStringSettings(baseURL, "ui-performance", "{}")
 
 	return &col
 }
