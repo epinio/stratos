@@ -11,7 +11,7 @@ on:
         type: string
 
 env:
-  SETUP_GO_VERSION: '1.18'
+  SETUP_GO_VERSION: '1.20'
   SETUP_NODE_VERSION: '16'
 
 jobs:
@@ -30,7 +30,7 @@ jobs:
           fetch-depth: 0
       -
         name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v4
         with:
           go-version: ${{ env.SETUP_GO_VERSION }}
       -
