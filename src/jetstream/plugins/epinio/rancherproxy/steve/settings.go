@@ -36,14 +36,14 @@ func NewDefaultSettings(ec echo.Context) *interfaces.Collection {
 		epinioTheme = "light"
 	}
 
-	col.Data = make([]interface{}, 5)
+	col.Data = make([]interface{}, 6)
 	// Visible to all, regardless of auth
 	col.Data[0] = NewStringSettings(baseURL, "first-login", "false")
 	col.Data[1] = NewStringSettings(baseURL, "ui-pl", "Epinio")
 	col.Data[2] = NewStringSettings(baseURL, "server-version", epinioVersion)
 	col.Data[3] = NewStringSettings(baseURL, "ui-theme", epinioTheme)
 	col.Data[4] = NewStringSettings(baseURL, "ui-favicon", GetFavicon())
-	col.Data[4] = NewStringSettings(baseURL, "ui-performance", "{}")
+	col.Data[5] = NewStringSettings(baseURL, "ui-performance", "{}")
 
 	return &col
 }
