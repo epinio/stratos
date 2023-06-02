@@ -21,7 +21,7 @@ func NewClusters(ec echo.Context) *interfaces.Collection {
 	baseURL := interfaces.GetSelfLink(ec)
 
 	col.Data = make([]interface{}, 1)
-	col.Data[0] = NewCluster(baseURL, "local")
+	col.Data[0] = NewCluster(baseURL, "default") // Must match EPINIO_STANDALONE_CLUSTER_NAME from front end
 
 	return &col
 }
