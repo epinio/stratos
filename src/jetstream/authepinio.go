@@ -259,14 +259,16 @@ func (a *epinioAuth) epinioOIDCLogin(c echo.Context) (string, string, error) {
 	}
 
 	var claims struct {
-		Email   string      `json:"email"`
-		Groups  []string    `json:"groups"`
-		Profile interface{} `json:"profile"`
+		Email           string   `json:"email"`
+		Groups          []string `json:"groups"`
+		FederatedClaims struct {
+			ConnectorID string `json:"connector_id"`
+		} `json:"federated_claims"`
 	}
 	log.Warnf("epinioOIDCLogin: token: %+v", idToken)
 
 	if err := idToken.Claims(&claims); err != nil {
-		msg := "token in unexpected format: %+v"
+		msg := "token in unexpected format"
 		log.Errorf(msg, err)
 		return "", "", errors.New(msg)
 	}

@@ -20,7 +20,7 @@ const (
 )
 
 var (
-	DefaultScopes = []string{oidc.ScopeOpenID, oidc.ScopeOfflineAccess, "profile", "email", "groups", "audience:server:client_id:epinio-api"}
+	DefaultScopes = []string{oidc.ScopeOpenID, oidc.ScopeOfflineAccess, "profile", "email", "groups", "audience:server:client_id:epinio-api", "federated:id"}
 )
 
 // OIDCProvider wraps an oidc.Provider and its Configuration
