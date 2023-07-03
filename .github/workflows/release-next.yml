@@ -83,12 +83,17 @@ jobs:
           ref: main
           submodules: recursive
           fetch-depth: 0
+          path: epinio-ui
       -
         name: Build Epinio dashboard
         if: ${{ github.event.inputs.ui_bundle_url == '' }}
+        # go to the repo's directory, build the ui, move the build to `ui` in the workflow root (as per location when downloading from url)
         run: |
+          pushd epinio-ui
           ./.github/workflows/scripts/build-ui.sh
-          mv dashboard/$OUTPUT_DIR/$ARTIFACT_NAME ui
+          mv dashboard/$OUTPUT_DIR/$ARTIFACT_NAME ../ui
+          popd
+          rm -rf epinio-ui
         env:
           RANCHER_ENV: epinio
           EXCLUDES_PKG: rancher-components,harvester
