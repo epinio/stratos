@@ -13,6 +13,7 @@ on:
 
 env:
   SETUP_GO_VERSION: '1.18'
+  SETUP_NODE_VERSION: '16'
 
 jobs:
   release:
@@ -34,6 +35,14 @@ jobs:
         with:
           cache: false
           go-version: ${{ env.SETUP_GO_VERSION }}
+      -
+        name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.SETUP_NODE_VERSION }}
+      -
+        name: Install yarn
+        run: npm install  --global yarn
       -
         uses: anchore/sbom-action/download-syft@v0.13.1
       -
