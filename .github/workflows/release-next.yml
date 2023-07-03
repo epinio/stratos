@@ -83,7 +83,6 @@ jobs:
           ref: main
           submodules: recursive
           fetch-depth: 0
-          path: dashboard
       -
         name: Build Epinio dashboard
         if: ${{ github.event.inputs.ui_bundle_url == '' }}
