@@ -88,18 +88,15 @@ jobs:
         name: Build Epinio dashboard
         if: ${{ github.event.inputs.ui_bundle_url == '' }}
         run: |
-          pushd dashboard
           ./.github/workflows/scripts/build-ui.sh
-          mv $OUTPUT_DIR/$ARTIFACT_NAME ../ui
-          popd
-          rm -rf dashboard
+          mv dashboard/$OUTPUT_DIR/$ARTIFACT_NAME ui
         env:
           RANCHER_ENV: epinio
           EXCLUDES_PKG: rancher-components,harvester
           EXCLUDE_OPERATOR_PKG: true
           OUTPUT_DIR: dist
           RELEASE_DIR: release
-          ARTIFACT_NAME: rancher-dashboard-epinio-standalone-embed
+          ARTIFACT_NAME: rancher-dashboard-epinio-standalone
           NODE_OPTIONS: "--max-old-space-size=4096"
           LOGIN_LOCALE_SELECTOR: false
 
