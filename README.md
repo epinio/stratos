@@ -1,3 +1,6 @@
+# **The Epinio UI now lives in https://github.com/epinio/ui**
+---
+---
 [![Unit tests](https://github.com/epinio/ui-backend/actions/workflows/main.yml/badge.svg)](https://github.com/epinio/ui-backend/actions/workflows/main.yml)
 
 # Development
